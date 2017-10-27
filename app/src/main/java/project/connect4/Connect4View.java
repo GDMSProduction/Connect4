@@ -63,6 +63,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     private Paint paint;
     private Paint fontPaint;
+    private Paint gameOverPaint;
     private Canvas canvas;
     private SurfaceHolder surfaceHolder;
 
@@ -79,6 +80,9 @@ public class Connect4View extends SurfaceView implements Runnable {
     private float prevHeight = 0;
 
     private boolean redsTurn = true;
+    private boolean gameOver = false;
+    private boolean redWins = false;
+    private boolean blueWins = false;
 
     Node map;
 
@@ -88,8 +92,9 @@ public class Connect4View extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         paint = new Paint();
         fontPaint = new Paint();
-        //fontPaint.setTextScaleX(6f);
         fontPaint.setTextSize(45f);
+        gameOverPaint = new Paint();
+        gameOverPaint.setTextSize(360f);
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
 
@@ -128,6 +133,8 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     public boolean addChip(boolean red, int column)
     {
+        if (gameOver)
+            return false;
         Node target = map;
         for (int i = 0; i < column; ++i)
         {
@@ -146,10 +153,14 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         target.data = new Chip(red?chipRed:chipBlue,true, red);
 
-       // if (winCheck(target))
-        //{
-        //    playing = false;
-        //}
+        if (winCheck(target))
+        {
+            gameOver = true;
+            if (redsTurn)
+                redWins = true;
+            else
+                blueWins = true;
+        }
         return true;
     }
 
@@ -204,6 +215,17 @@ public class Connect4View extends SurfaceView implements Runnable {
 
             }
 
+            if (gameOver)
+            {
+                if (redWins) {
+                    gameOverPaint.setColor(Color.RED);
+                    canvas.drawText("Red Wins!", 50, 615, gameOverPaint);
+                }
+                else {
+                    gameOverPaint.setColor(Color.BLUE);
+                    canvas.drawText("Blue Wins!", 50, 615, gameOverPaint);
+                }
+            }
 
             //Unlocking the canvas
             surfaceHolder.unlockCanvasAndPost(canvas);
@@ -244,18 +266,100 @@ public class Connect4View extends SurfaceView implements Runnable {
         while (tmp != null) {
             if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
                 count++;
+            else
+                break;
             if (tmp.left != null) {
                 tmp = tmp.left.up;
             }
+            else
+                break;
         }
         tmp = check;
         count--;
         while (tmp != null) {
             if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
                 count++;
+            else
+                break;
             if (tmp.right != null) {
                 tmp = tmp.right.down;
             }
+            else
+                break;
+        }
+        if (count >= 4)
+            return true;
+
+        tmp = check;
+        count = 0;
+        //Diagonal up-left
+        while (tmp != null) {
+            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+                count++;
+            else
+                break;
+            if (tmp.right != null) {
+                tmp = tmp.right.up;
+            }
+            else
+                break;
+        }
+        tmp = check;
+        count--;
+        while (tmp != null) {
+            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+                count++;
+            else
+                break;
+            if (tmp.left != null) {
+                tmp = tmp.left.down;
+            }
+            else
+                break;
+        }
+        if (count >= 4)
+            return true;
+
+        tmp = check;
+        count = 0;
+        //Diagonal up-left
+        while (tmp != null) {
+            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+                count++;
+            else
+                break;
+            tmp = tmp.left;
+        }
+        tmp = check;
+        count--;
+        while (tmp != null) {
+            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+                count++;
+            else
+                break;
+            tmp = tmp.right;
+        }
+        if (count >= 4)
+            return true;
+
+        tmp = check;
+        count = 0;
+        //Diagonal up-left
+        while (tmp != null) {
+            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+                count++;
+            else
+                break;
+            tmp = tmp.up;
+        }
+        tmp = check;
+        count--;
+        while (tmp != null) {
+            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+                count++;
+            else
+                break;
+            tmp = tmp.down;
         }
         if (count >= 4)
             return true;

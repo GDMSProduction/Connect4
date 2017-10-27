@@ -18,7 +18,8 @@
         </activity>
         <activity
             android:name=".Connect4Game"
-            android:theme="@style/generalnotitle">
+            android:theme="@style/generalnotitle"
+            android:screenOrientation="sensorLandscape">
         </activity>
     </application>
 
