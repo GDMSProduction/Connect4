@@ -9,6 +9,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
+import android.os.Build;
+import android.support.annotation.RequiresApi;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -25,33 +27,21 @@ class Chip
 {
     private Bitmap im;
     private boolean isRed;
-    private boolean real;
     private static Paint paint;
     Chip(Bitmap _im, boolean _isReal, boolean _isRed)
     {
         im = _im;
-        real = _isReal;
         isRed = _isRed;
         paint = new Paint();
-    }
-    public boolean isReal()
-    {
-        return real;
     }
     public boolean Red()
     {
         return isRed;
     }
-    public void Draw(int x, int y, Canvas c, RectF dest)
+    public void Draw(int x, int y, Canvas c)
     {
-        if (real)
-            c.drawBitmap(im,(24*x + 290 + x * 150),(24*y +  21 + y * 150), paint);
+        c.drawBitmap(im, x, y, paint);
     }
-}
-class Node
-{
-    Chip data;
-    Node up = null, down = null, left = null, right = null;
 }
 
 public class Connect4View extends SurfaceView implements Runnable {
@@ -64,27 +54,23 @@ public class Connect4View extends SurfaceView implements Runnable {
     private Paint paint;
     private Paint fontPaint;
     private Paint gameOverPaint;
-    private Canvas canvas;
+    private static Canvas canvas;
     private SurfaceHolder surfaceHolder;
 
-    private Bitmap background;
     private Bitmap chipRed;
     private Bitmap chipBlue;
     private Bitmap chipYellow;
 
-    private Rect backRect;
-    private RectF destBack;
 
     private float tmpX = -100;
     private float tmpY = -100;
-    private float prevHeight = 0;
 
     private boolean redsTurn = true;
     private boolean gameOver = false;
     private boolean redWins = false;
     private boolean blueWins = false;
 
-    Node map;
+    Map<Chip> map;
 
     //Class constructor
     public Connect4View(Context context) {
@@ -98,15 +84,13 @@ public class Connect4View extends SurfaceView implements Runnable {
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inScaled = false;
 
-        background = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4board, options);
+        Bitmap background = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4board, options);
         Bitmap sprite = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4chips, options);
         chipRed = Bitmap.createBitmap(sprite,0,0,150,150);
         chipBlue = Bitmap.createBitmap(sprite,150,0,150,150);
         chipYellow = Bitmap.createBitmap(sprite,0,150,150,150);
 
-        backRect = new Rect(0,0,background.getWidth(),background.getHeight());
-
-        GenerateMap(7,6);
+        map = new Map<Chip>(7,6, background, new Rect(14,14,12,12));
     }
     @Override
     public boolean onTouchEvent(MotionEvent e)
@@ -117,10 +101,10 @@ public class Connect4View extends SurfaceView implements Runnable {
         switch (e.getAction()) {
 
             case MotionEvent.ACTION_DOWN:
-                int column = (int)floor((x - destBack.left)/((destBack.right- destBack.left)/7));
-                if (column >= 0 && column < 7)
+                Map<Chip>.Coord tmp = map.getCoordOfTouch((int)x,(int)y);
+                if (tmp.x >= 0 && tmp.x < 7)
                 {
-                    if (addChip(redsTurn,column))
+                    if (addChip(redsTurn,tmp.x))
                         redsTurn = !redsTurn;
                 }
             case MotionEvent.ACTION_MOVE:
@@ -135,18 +119,19 @@ public class Connect4View extends SurfaceView implements Runnable {
     {
         if (gameOver)
             return false;
-        Node target = map;
+        Map<Chip>.Node target = map.getNodeCoord(0,0);
+
         for (int i = 0; i < column; ++i)
         {
             target = target.right;
         }
 
-        if (target.data.isReal())
+        if (target.data != null)
             return false;
 
         while (true)
         {
-            if (target.down == null || target.down.data.isReal())
+            if (target.down == null || target.down.data != null)
                 break;
             target = target.down;
         }
@@ -161,6 +146,11 @@ public class Connect4View extends SurfaceView implements Runnable {
             else
                 blueWins = true;
         }
+        else if (tieCheck())
+        {
+            gameOver = true;
+        }
+
         return true;
     }
 
@@ -175,10 +165,16 @@ public class Connect4View extends SurfaceView implements Runnable {
         }
     }
 
-
     private void update() {
 
     }
+
+    public static void DrawChip(Chip c, Map<Chip>.Coord loc)
+    {
+        c.Draw(loc.x,loc.y,canvas);
+    }
+    private Map.DrawInterface<Chip> chipDraw = Connect4View::DrawChip;
+
     private int count = 0;
     private void draw() {
         //Need a valid surface to draw
@@ -190,16 +186,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             int col = Color.HSVToColor(new float[]{count++%360,1,1});
             canvas.drawColor(col);
 
-            DrawMap(canvas,destBack);
-
-            float height = (float)getHeight();
-            if (prevHeight != height) {
-                float align = height*1.16f;
-                float offset = (getWidth()-align)/2;
-                destBack = new RectF(offset, 0.0f, align + offset, height);
-                prevHeight = height;
-            }
-            canvas.drawBitmap(background,backRect,destBack, paint);
+            map.Draw(canvas, this, chipDraw);
 
 
             canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,paint);
@@ -221,9 +208,13 @@ public class Connect4View extends SurfaceView implements Runnable {
                     gameOverPaint.setColor(Color.RED);
                     canvas.drawText("Red Wins!", 50, 615, gameOverPaint);
                 }
-                else {
+                else if (blueWins) {
                     gameOverPaint.setColor(Color.BLUE);
                     canvas.drawText("Blue Wins!", 50, 615, gameOverPaint);
+                }
+                else {
+                    gameOverPaint.setColor(Color.YELLOW);
+                    canvas.drawText("Tie Game!", 50, 615, gameOverPaint);
                 }
             }
 
@@ -258,13 +249,25 @@ public class Connect4View extends SurfaceView implements Runnable {
         gameThread = new Thread(this);
         gameThread.start();
     }
-    boolean winCheck(Node check)
+    boolean tieCheck()
     {
-        Node tmp = check;
+        Map<Chip>.Node tmp = map.getNodeCoord(0,0);
+        while (tmp != null) {
+            if (tmp.data == null)
+                break;
+            if (tmp.right == null)
+                return true;
+            tmp = tmp.right;
+        }
+        return false;
+    }
+    boolean winCheck(Map<Chip>.Node check)
+    {
+        Map<Chip>.Node tmp = check;
         int count = 0;
         //Diagonal up-left
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -277,7 +280,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -294,7 +297,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         count = 0;
         //Diagonal up-left
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -307,7 +310,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -324,7 +327,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         count = 0;
         //Diagonal up-left
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -333,7 +336,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -346,7 +349,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         count = 0;
         //Diagonal up-left
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -355,7 +358,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data.isReal() && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -366,78 +369,5 @@ public class Connect4View extends SurfaceView implements Runnable {
 
 
         return false;
-    }
-    //Calls draw on every cell in the NODE MESH
-    void recurseDraw(Node n, Canvas c, RectF dest, int x, int y)
-    {
-        if (n == null)
-            return;
-
-        n.data.Draw(x,y,c,dest);
-        recurseDraw(n.right, c, dest, x+1, y);
-        if (n.left == null)
-            recurseDraw(n.down,c , dest, x ,y+1);
-
-    }
-    //Starts the draw on the map
-    void DrawMap(Canvas c, RectF dest)
-    {
-        recurseDraw(map,c,dest,0,0);
-    }
-    public Node getNodeCoord(int x, int y)
-    {
-        Node tmp = map;
-        int i = 0;
-        for (; i < x; ++i)
-        {
-            tmp = tmp.right;
-        }
-        for (i = 0; i < y; ++i)
-        {
-            tmp = tmp.down;
-        }
-        return tmp;
-    }
-    public void GenerateMap(int width, int height)
-    {
-        if (width < 2 || height < 2)
-            return;
-
-        Node h = null;
-        Node over = null;
-        for (int i = 0; i < height; ++i)
-        {
-            if (h != null)
-            {
-                //Column 0 is linked up/down
-                h.down = new Node();
-                h.down.up = h;
-                over = h.right;
-                h = h.down;
-            }
-            else
-            {
-                //The very first node
-                h = new Node();
-                map = h;
-            }
-            h.data = new Chip(null, false, false);
-            Node w = h;
-            for (int j = 0; j < width - 1; ++j)
-            {
-                //Rows are linked left/right
-                w.right = new Node();
-                w.right.left = w;
-                w = w.right;
-                w.data = new Chip(null, false, false);
-                //Build the connections Up/Down for the rest of the width
-                if (over != null)
-                {
-                    over.down = w;
-                    w.up = over;
-                    over = over.right;
-                }
-            }
-        }
     }
 }
