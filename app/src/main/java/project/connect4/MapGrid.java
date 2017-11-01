@@ -11,10 +11,10 @@ import android.view.View;
 import static java.lang.Math.floor;
 
 /**
- * Created by User on 10/31/2017.
+ * Created by Philip on 10/31/2017.
  */
 
-public class Map<T> {
+public class MapGrid<T> {
 
     public class Node{
         T data;
@@ -22,7 +22,7 @@ public class Map<T> {
     }
     @FunctionalInterface
     public interface DrawInterface<t>{
-        void test(t c, Map<t>.Coord loc);
+        void test(t c, MapGrid<t>.Coord loc);
     }
 
     public class Coord{
@@ -42,7 +42,7 @@ public class Map<T> {
     int y;
 
 
-    public Map(int _x, int _y, Bitmap _im, Rect adj)
+    public MapGrid(int _x, int _y, Bitmap _im, Rect adj)
     {
         x = _x;
         y = _y;
@@ -73,7 +73,7 @@ public class Map<T> {
             recurseDraw(n.down, _x ,_y+1, test);
 
     }
-    //Starts the draw on the map
+    //Starts the draw on the mapGrid
     void DrawMap(DrawInterface<T> test)
     {
         recurseDraw(map,0,0, test);
@@ -90,8 +90,8 @@ public class Map<T> {
             destAdj = new RectF(Adjustment.left * scaleX, Adjustment.top * scaleY, Adjustment.right * scaleX, Adjustment.bottom * scaleY);
             prevHeight = height;
         }
-        c.drawBitmap(background,backRect,destBack, paint);
         DrawMap(test);
+        c.drawBitmap(background,backRect,destBack, paint);
     }
 
 
