@@ -84,6 +84,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Play a sound effect
         mp.start();
 
+        checkAllWins();
+
         //Change turns after a chip was played
         redsTurn = !redsTurn;
     }
@@ -232,11 +234,6 @@ public class Connect4View extends SurfaceView implements Runnable {
             else
                 EventSystem.triggerEvent("Blue_Chip_Placed");
 
-            //If we can't fall, it could be a tie
-            if (tieCheck())
-            {
-                EventSystem.triggerEvent("Tie_Game");
-            }
         }
         else
         {
@@ -302,27 +299,10 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (isFalling && !startFalling)
             fallDownTiles();
 
-        //Everything is done moving, check wins
+        //Everything is done moving
         if (wasFalling && !isFalling)
         {
-            //Check wins
-            MapGrid<Chip>.Node tmp = mapGrid.getNodeCoord(0,0);
-            while (tmp != null)
-            {
-                MapGrid<Chip>.Node tmp2 = tmp;
-                while (tmp2 != null) {
-                    if (winCheck(tmp2)) {
-                        if (tmp2.data.Red())
-                            EventSystem.triggerEvent("Red_Wins");
-                        else
-                            EventSystem.triggerEvent("Blue_Wins");
-                        return;
-                    }
-                    tmp2 = tmp2.down;
-                }
-
-                tmp = tmp.right;
-            }
+            //Something can go here
         }
         //Delay the fall for one update
         if (startFalling)
@@ -427,6 +407,31 @@ public class Connect4View extends SurfaceView implements Runnable {
             tmp = tmp.right;
         }
         return false;
+    }
+    static void checkAllWins()
+    {
+        //Check wins
+        MapGrid<Chip>.Node tmp = mapGrid.getNodeCoord(0,0);
+        while (tmp != null)
+        {
+            MapGrid<Chip>.Node tmp2 = tmp;
+            while (tmp2 != null) {
+                if (winCheck(tmp2)) {
+                    if (tmp2.data.Red())
+                        EventSystem.triggerEvent("Red_Wins");
+                    else
+                        EventSystem.triggerEvent("Blue_Wins");
+                    return;
+                }
+                tmp2 = tmp2.down;
+            }
+
+            tmp = tmp.right;
+        }
+        if (!gameOver && tieCheck())
+        {
+            EventSystem.triggerEvent("Tie_Game");
+        }
     }
     static boolean winCheck(MapGrid<Chip>.Node check)
     {
