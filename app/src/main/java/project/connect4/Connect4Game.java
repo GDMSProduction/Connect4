@@ -1,6 +1,7 @@
 package project.connect4;
 
 import android.content.pm.ActivityInfo;
+import android.media.AudioManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 
@@ -10,7 +11,7 @@ public class Connect4Game extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
+        setVolumeControlStream(AudioManager.STREAM_MUSIC);
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         conn4View = new Connect4View(this);

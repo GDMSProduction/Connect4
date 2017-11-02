@@ -177,12 +177,14 @@ public class Connect4View extends SurfaceView implements Runnable {
         EventSystem.addHook("Tie_Game",Connect4View::onTie_Game);
     }
     //Setup a new round, generates an empty grid
-    private void newGame()
+    public static void newGame()
     {
         gameOver = false;
         redsTurn = true;
         redWins = false;
         blueWins = false;
+        isFalling = false;
+        startFalling = false;
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,14,12,12));
     }
 
