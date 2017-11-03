@@ -17,14 +17,12 @@ import android.view.SurfaceView;
  */
 class Chip
 {
-    private Bitmap im;
+    protected Bitmap im;
     private boolean isRed;
-    private static Paint paint;
     Chip(Bitmap _im, boolean _isRed)
     {
         im = _im;
         isRed = _isRed;
-        paint = new Paint();
     }
     public boolean Red()
     {
@@ -32,7 +30,45 @@ class Chip
     }
     public void Draw(int x, int y, Canvas c)
     {
-        c.drawBitmap(im, x, y, paint);
+        c.drawBitmap(im, x, y, null);
+    }
+}
+class DragChip extends Chip
+{
+    private int left;
+    private int top;
+    private int width;
+    private int height;
+    private boolean isActive;
+
+    DragChip(Bitmap _im, boolean _isRed, int x, int y, int w, int h)
+    {
+        super(_im,_isRed);
+        left = x;
+        top = y;
+        width = w;
+        height = h;
+        isActive = true;
+    }
+    public boolean isInside(int x, int y)
+    {
+        if (isActive && x >= left && x <= left+width && y >= top && y <= top+height)
+            return true;
+        return false;
+    }
+    public void setActive(boolean state)
+    {
+        isActive = state;
+    }
+    public void setPosition(int x, int y)
+    {
+        left = x;
+        top = y;
+    }
+    public void Draw(Canvas c)
+    {
+        if (isActive)
+            super.Draw(left, top, c);
     }
 }
 
@@ -47,7 +83,8 @@ public class Connect4View extends SurfaceView implements Runnable {
     private Thread gameThread = null;
 
     //A list of all events this game uses
-    private static String[] events = {"Chip_Placed", "Blue_Chip_Placed", "Red_Chip_Placed", "Blue_Wins", "Red_Wins", "Tie_Game"};
+    private static String[] events = {"Chip_Placed", "Blue_Chip_Placed",
+            "Red_Chip_Placed", "Blue_Wins", "Red_Wins", "Tie_Game", "Touch_Down", "Touch_Move", "Touch_Up"};
 
     private Paint fontPaint;
     private static Paint gameOverPaint;
@@ -64,8 +101,8 @@ public class Connect4View extends SurfaceView implements Runnable {
     private static Bitmap redWins_image;
 
     //Temporary yellow chip location
-    private float tmpX = -100;
-    private float tmpY = -100;
+    private static float tmpX = -100;
+    private static float tmpY = -100;
 
     //Booleans for game states
     private static boolean redsTurn;
@@ -78,6 +115,12 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     //The main grid which holds the chips
     private static MapGrid<Chip> mapGrid;
+
+    //The chip being dragged
+    private static DragChip dragged = null;
+
+    //Draggable chips
+    private static DragChip[] drags;
 
     private static void onChip_Placed()
     {
@@ -117,6 +160,45 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Add some stats
     }
 
+    //Touch events, use tmpx and tmpy for locations
+    private static void onTouch_Down()
+    {
+        for (int i = 0; i < drags.length; ++i) {
+            if (drags[i].isInside((int) tmpX, (int) tmpY)) {
+                dragged = drags[i];
+            }
+        }
+    }
+    private static void onTouch_Move()
+    {
+        if (dragged != null)
+        {
+            dragged.setPosition((int)tmpX-75,(int)tmpY-75);
+        }
+    }
+    private static void onTouch_Up()
+    {
+        if (dragged != null)
+        {
+            boolean wasPlaced = false;
+            MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
+            if (tmp.x >= 0 && tmp.x < 7)
+            {
+                wasPlaced = addChip(dragged.Red(),tmp.x);
+            }
+
+            dragged.setPosition(25,25);
+            if (wasPlaced) {
+                dragged.setActive(false);
+                for (int i = 0; i < drags.length; ++i) {
+                    if (drags[i].Red() != redsTurn) {
+                        drags[i].setActive(true);
+                    }
+                }
+            }
+            dragged = null;
+        }
+    }
     //Class constructor
     public Connect4View(Context context) {
         super(context);
@@ -163,6 +245,11 @@ public class Connect4View extends SurfaceView implements Runnable {
         gameOverPaint.setTextSize(360f);
         gameOverPaint.setColor(Color.argb(127,0,0,0));
 
+        DragChip red_drag = new DragChip(chipRed,true,25,25,150,150);
+        DragChip blue_drag = new DragChip(chipBlue,false, 175,25,150,150);
+        drags = new DragChip[] {red_drag, blue_drag};
+        blue_drag.setActive(false);
+
         //Clear any events from before
         EventSystem.clearEvents();
         //Add our event names
@@ -177,6 +264,9 @@ public class Connect4View extends SurfaceView implements Runnable {
         EventSystem.addHook("Red_Wins",Connect4View::onRed_Wins);
         EventSystem.addHook("Blue_Wins",Connect4View::onBlue_Wins);
         EventSystem.addHook("Tie_Game",Connect4View::onTie_Game);
+        EventSystem.addHook("Touch_Down",Connect4View::onTouch_Down);
+        EventSystem.addHook("Touch_Move",Connect4View::onTouch_Move);
+        EventSystem.addHook("Touch_Up",Connect4View::onTouch_Up);
     }
     //Setup a new round, generates an empty grid
     public static void newGame()
@@ -187,6 +277,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         blueWins = false;
         isFalling = false;
         startFalling = false;
+        drags[0].setActive(true);
+        drags[1].setActive(false);
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,14,12,12));
     }
 
@@ -200,22 +292,29 @@ public class Connect4View extends SurfaceView implements Runnable {
         {
             //Our main chip placement
             case MotionEvent.ACTION_DOWN:
-                MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)x,(int)y);
-                if (tmp.x >= 0 && tmp.x < 7)
-                {
-                    addChip(redsTurn,tmp.x);
-                }
-                //No break to update the yellow chip location
-                //We can get continued movement here
+                tmpX = x;
+                tmpY = y;
+                EventSystem.triggerEvent("Touch_Down");
+                break;
+            //We can get continued movement here
             case MotionEvent.ACTION_MOVE:
                 tmpX = x;
                 tmpY = y;
+                EventSystem.triggerEvent("Touch_Move");
+                break;
+            //Up events
+            case MotionEvent.ACTION_UP:
+
+                tmpX = x;
+                tmpY = y;
+                EventSystem.triggerEvent("Touch_Up");
+
                 break;
         }
 
         return true;
     }
-    public boolean addChip(boolean red, int column)
+    public static boolean addChip(boolean red, int column)
     {
         if (gameOver || isFalling)
             return false;
@@ -328,16 +427,20 @@ public class Connect4View extends SurfaceView implements Runnable {
 
             mapGrid.Draw(canvas, this, chipDraw);
 
-            canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
+            //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
 
             if (redsTurn) {
-                canvas.drawBitmap(chipRed, 25, 25, null);
+                //canvas.drawBitmap(chipRed, 25, 25, null);
                 canvas.drawText("RED Turn",5,215,fontPaint);
 
             }
             else {
-                canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
+                //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
                 canvas.drawText("BLUE Turn",getWidth() - 225,215,fontPaint);
+            }
+            for (int i =0;i < drags.length; ++i)
+            {
+                drags[i].Draw(canvas);
             }
 
             if (gameOver)
