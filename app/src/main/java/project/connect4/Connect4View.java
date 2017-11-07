@@ -15,19 +15,24 @@ import android.view.SurfaceView;
 /**
  * Created by Philip on 10/26/2017.
  */
+//Chip types:   RED : 0 regular, 1 bomb, 2 defuse, 3 wood
+//              BLUE: 4         5          6        7
 class Chip
 {
     protected Bitmap im;
     private boolean isRed;
-    Chip(Bitmap _im, boolean _isRed)
+    private int type;
+    Chip(Bitmap _im, boolean _isRed, int _type)
     {
         im = _im;
         isRed = _isRed;
+        type = _type;
     }
     public boolean Red()
     {
         return isRed;
     }
+    public int getType() { return type; }
     public void Draw(int x, int y, Canvas c)
     {
         c.drawBitmap(im, x, y, null);
@@ -43,9 +48,9 @@ class DragChip extends Chip
     private int height;
     private boolean isActive;
 
-    DragChip(Bitmap _im, boolean _isRed, int x, int y, int w, int h)
+    DragChip(Bitmap _im, boolean _isRed, int _type, int x, int y, int w, int h)
     {
-        super(_im,_isRed);
+        super(_im,_isRed,_type);
         setPosition(x,y);
         width = w;
         height = h;
@@ -93,50 +98,50 @@ public class Connect4View extends SurfaceView implements Runnable {
     volatile boolean playing;
 
     //Have we setup the static vars?
-    private static boolean setup = false;
+    protected static boolean setup = false;
 
     //the game thread
-    private Thread gameThread = null;
+    protected Thread gameThread = null;
 
     //A list of all events this game uses
-    private static String[] events = {"Chip_Placed", "Blue_Chip_Placed",
+    protected static String[] events = {"Chip_Placed", "Blue_Chip_Placed",
             "Red_Chip_Placed", "Blue_Wins", "Red_Wins", "Tie_Game", "Touch_Down", "Touch_Move", "Touch_Up"};
 
-    private Paint fontPaint;
-    private static Paint gameOverPaint;
-    private static Canvas canvas;
-    private SurfaceHolder surfaceHolder;
+    protected Paint fontPaint;
+    protected static Paint gameOverPaint;
+    protected static Canvas canvas;
+    protected SurfaceHolder surfaceHolder;
 
     //Images
-    private static Bitmap background;
-    private static Bitmap chipRed;
-    private static Bitmap chipBlue;
-    private static Bitmap chipYellow;
+    protected static Bitmap background;
+    protected static Bitmap chipRed;
+    protected static Bitmap chipBlue;
+    protected static Bitmap chipYellow;
 
-    private static Bitmap blueWins_image;
-    private static Bitmap redWins_image;
+    protected static Bitmap blueWins_image;
+    protected static Bitmap redWins_image;
 
     //Temporary yellow chip location
-    private static float tmpX = -100;
-    private static float tmpY = -100;
+    protected static float tmpX = -100;
+    protected static float tmpY = -100;
 
     //Booleans for game states
-    private static boolean redsTurn;
-    private static boolean gameOver;
-    private static boolean redWins;
-    private static boolean blueWins;
+    protected static boolean redsTurn;
+    protected static boolean gameOver;
+    protected static boolean redWins;
+    protected static boolean blueWins;
 
     //The sound for chip placement
-    private static MediaPlayer mp;
+    protected static MediaPlayer mp;
 
     //The main grid which holds the chips
-    private static MapGrid<Chip> mapGrid;
+    protected static MapGrid<Chip> mapGrid;
 
     //The chip being dragged
-    private static DragChip dragged = null;
+    protected static DragChip dragged = null;
 
     //Draggable chips
-    private static DragChip[] drags;
+    protected static DragChip[] drags;
 
     private static void onChip_Placed()
     {
@@ -158,27 +163,30 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         //Add some stats
         drags[1].setActive(true);
+        drags[0].setActive(false);
     }
     private static void onBlue_Chip_Placed()
     {
         //Add some stats
         drags[0].setActive(true);
+        drags[1].setActive(false);
+
     }
-    private static void onRed_Wins()
+    protected static void onRed_Wins()
     {
         redWins = true;
         gameOver = true;
 
         //Add some stats
     }
-    private static void onBlue_Wins()
+    protected static void onBlue_Wins()
     {
         blueWins = true;
         gameOver = true;
 
         //Add some stats
     }
-    private static void onTie_Game()
+    protected static void onTie_Game()
     {
         gameOver = true;
         //Add some stats
@@ -205,12 +213,13 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (dragged != null && dragged.getActive())
         {
             MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
+            dragged.resetPosition();
             if (tmp.x >= 0 && tmp.x < 7)
             {
-                if (addChip(dragged.Red(),tmp.x))
-                    dragged.setActive(false);
+                addChip(dragged.Red(),tmp.x);
             }
-            dragged.resetPosition();
+            else
+                dragged = null;
         }
     }
     //Class constructor
@@ -227,7 +236,20 @@ public class Connect4View extends SurfaceView implements Runnable {
             setupOnce(context);
             newGame();
         }
+    }
+    public Connect4View(Context context, boolean doSetup) {
+        super(context);
+        surfaceHolder = getHolder();
+        fontPaint = new Paint();
+        fontPaint.setTextSize(45f);
 
+
+        //The first time this is made, setup statics
+        if (!setup && doSetup)
+        {
+            setupOnce(context);
+            newGame();
+        }
     }
     @Override
     public void onSizeChanged(int x, int y, int w, int h) {
@@ -235,7 +257,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (x == 0)
             return;
         //Resize anything that may have needed it
-        drags[1].setPosition(x-175,25);
+        if (drags != null)
+            drags[1].setPosition(x-175,25);
     }
     private void setupOnce(Context context)
     {
@@ -256,14 +279,14 @@ public class Connect4View extends SurfaceView implements Runnable {
         gameOverPaint.setTextSize(360f);
         gameOverPaint.setColor(Color.argb(127,0,0,0));
 
-        DragChip red_drag = new DragChip(chipRed,true,25,25,150,150);
-        DragChip blue_drag = new DragChip(chipBlue,false, 25,25,150,150);
+        DragChip red_drag = new DragChip(chipRed,true, 0,25,25,150,150);
+        DragChip blue_drag = new DragChip(chipBlue,false, 0, 25,25,150,150);
         drags = new DragChip[] {red_drag, blue_drag};
         blue_drag.setActive(false);
 
         setupEvents();
     }
-    public static void setupImages(Context context, BitmapFactory.Options options)
+    protected static void setupImages(Context context, BitmapFactory.Options options)
     {
 
         //The main game background
@@ -356,7 +379,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (target.data != null)
             return false;
 
-        target.data = new Chip(red?chipRed:chipBlue, red);
+        target.data = new Chip(red?chipRed:chipBlue, red,0);
 
         if (target.down.data != null)
         {
@@ -420,12 +443,12 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     }
     //If something fell last frame
-    private static boolean isFalling = false;
+    protected static boolean isFalling = false;
     //If we should start falling next frame
-    private static boolean startFalling = false;
+    protected static boolean startFalling = false;
     //A previous falling state to see when we are done
-    private static boolean wasFalling = false;
-    private void update() {
+    protected static boolean wasFalling = false;
+    protected void update() {
         wasFalling = isFalling;
 
         if (isFalling && !startFalling)
@@ -447,9 +470,9 @@ public class Connect4View extends SurfaceView implements Runnable {
     {
         c.Draw(loc.x,loc.y,canvas);
     }
-    private MapGrid.DrawInterface<Chip> chipDraw = Connect4View::DrawChip;
+    protected MapGrid.DrawInterface<Chip> chipDraw = Connect4View::DrawChip;
 
-    private void draw() {
+    protected void draw() {
         //Need a valid surface to draw
         if (surfaceHolder.getSurface().isValid()) {
             //locking the canvas
@@ -503,7 +526,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         }
     }
 
-    private void sleep() {
+    protected void sleep() {
         try {
             gameThread.sleep(17);
         } catch (InterruptedException e) {
@@ -571,11 +594,14 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     static boolean winCheck(MapGrid<Chip>.Node check)
     {
+        if (check == null || check.data == null || check.data.getType()%4 != 0)
+            return false;
+
         MapGrid<Chip>.Node tmp = check;
         int count = 0;
         //Diagonal up-left
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -588,7 +614,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -603,9 +629,9 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         tmp = check;
         count = 0;
-        //Diagonal up-left
+        //Diagonal up-right
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -618,7 +644,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -633,9 +659,9 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         tmp = check;
         count = 0;
-        //Diagonal up-left
+        //Left-right
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -644,7 +670,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -655,9 +681,9 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         tmp = check;
         count = 0;
-        //Diagonal up-left
+        //Up-down
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
@@ -666,7 +692,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         tmp = check;
         count--;
         while (tmp != null) {
-            if (tmp.data != null && tmp.data.Red() == check.data.Red())
+            if (tmp.data != null && (tmp.data.getType()%4) == 0 && tmp.data.Red() == check.data.Red())
                 count++;
             else
                 break;
