@@ -31,6 +31,6 @@ public class MainMenu extends AppCompatActivity implements View.OnClickListener 
     @Override
     public void onClick(View v)
     {
-        startActivity(new Intent(this, Connect4Game.class));
+        startActivity(new Intent(this, Strategic4Game.class));
     }
 }

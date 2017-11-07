@@ -35,6 +35,8 @@ class Chip
 }
 class DragChip extends Chip
 {
+    int originalX;
+    int originalY;
     private int left;
     private int top;
     private int width;
@@ -44,8 +46,7 @@ class DragChip extends Chip
     DragChip(Bitmap _im, boolean _isRed, int x, int y, int w, int h)
     {
         super(_im,_isRed);
-        left = x;
-        top = y;
+        setPosition(x,y);
         width = w;
         height = h;
         isActive = true;
@@ -60,10 +61,24 @@ class DragChip extends Chip
     {
         isActive = state;
     }
+    public boolean getActive()
+    {
+        return isActive;
+    }
     public void setPosition(int x, int y)
+    {
+        originalX = left = x;
+        originalY = top = y;
+    }
+    public void movePosition(int x, int y)
     {
         left = x;
         top = y;
+    }
+    public void resetPosition()
+    {
+        left = originalX;
+        top = originalY;
     }
     public void Draw(Canvas c)
     {
@@ -71,6 +86,7 @@ class DragChip extends Chip
             super.Draw(left, top, c);
     }
 }
+
 
 public class Connect4View extends SurfaceView implements Runnable {
     //boolean variable to track if the game is playing or not
@@ -131,14 +147,22 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         //Change turns after a chip was played
         redsTurn = !redsTurn;
+
+        //Clear the temp drag chip
+        dragged = null;
     }
     private static void onRed_Chip_Placed()
     {
+        //dragged is the chip that was placed now
+        //check type or something
+
         //Add some stats
+        drags[1].setActive(true);
     }
     private static void onBlue_Chip_Placed()
     {
         //Add some stats
+        drags[0].setActive(true);
     }
     private static void onRed_Wins()
     {
@@ -171,32 +195,22 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     private static void onTouch_Move()
     {
-        if (dragged != null)
+        if (dragged != null && dragged.getActive())
         {
-            dragged.setPosition((int)tmpX-75,(int)tmpY-75);
+            dragged.movePosition((int)tmpX-75,(int)tmpY-75);
         }
     }
     private static void onTouch_Up()
     {
-        if (dragged != null)
+        if (dragged != null && dragged.getActive())
         {
-            boolean wasPlaced = false;
             MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
             if (tmp.x >= 0 && tmp.x < 7)
             {
-                wasPlaced = addChip(dragged.Red(),tmp.x);
+                if (addChip(dragged.Red(),tmp.x))
+                    dragged.setActive(false);
             }
-
-            dragged.setPosition(25,25);
-            if (wasPlaced) {
-                dragged.setActive(false);
-                for (int i = 0; i < drags.length; ++i) {
-                    if (drags[i].Red() != redsTurn) {
-                        drags[i].setActive(true);
-                    }
-                }
-            }
-            dragged = null;
+            dragged.resetPosition();
         }
     }
     //Class constructor
@@ -215,20 +229,45 @@ public class Connect4View extends SurfaceView implements Runnable {
         }
 
     }
-    private static void setupOnce(Context context)
+    @Override
+    public void onSizeChanged(int x, int y, int w, int h) {
+        super.onSizeChanged(x,y,w,h);
+        if (x == 0)
+            return;
+        //Resize anything that may have needed it
+        drags[1].setPosition(x-175,25);
+    }
+    private void setupOnce(Context context)
     {
         setup = true;
+
+        //The click sound
+        mp = MediaPlayer.create(context,R.raw.chip_click);
 
         //Image loading options
         BitmapFactory.Options options = new BitmapFactory.Options();
         //Don't scale up images
         options.inScaled = false;
 
+        setupImages(context,options);
+
+        //Alpha paint for gameover
+        gameOverPaint = new Paint();
+        gameOverPaint.setTextSize(360f);
+        gameOverPaint.setColor(Color.argb(127,0,0,0));
+
+        DragChip red_drag = new DragChip(chipRed,true,25,25,150,150);
+        DragChip blue_drag = new DragChip(chipBlue,false, 25,25,150,150);
+        drags = new DragChip[] {red_drag, blue_drag};
+        blue_drag.setActive(false);
+
+        setupEvents();
+    }
+    public static void setupImages(Context context, BitmapFactory.Options options)
+    {
+
         //The main game background
         background = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4board, options);
-
-        //The click sound
-        mp = MediaPlayer.create(context,R.raw.chip_click);
 
         //Load piece image, and split it into colors
         Bitmap sprite = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4chips, options);
@@ -239,17 +278,9 @@ public class Connect4View extends SurfaceView implements Runnable {
         //End game images
         blueWins_image = BitmapFactory.decodeResource(context.getResources(),R.drawable.winnerblue, options);
         redWins_image = BitmapFactory.decodeResource(context.getResources(),R.drawable.winnerred, options);
-
-        //Alpha paint for gameover
-        gameOverPaint = new Paint();
-        gameOverPaint.setTextSize(360f);
-        gameOverPaint.setColor(Color.argb(127,0,0,0));
-
-        DragChip red_drag = new DragChip(chipRed,true,25,25,150,150);
-        DragChip blue_drag = new DragChip(chipBlue,false, 175,25,150,150);
-        drags = new DragChip[] {red_drag, blue_drag};
-        blue_drag.setActive(false);
-
+    }
+    public static void setupEvents()
+    {
         //Clear any events from before
         EventSystem.clearEvents();
         //Add our event names
@@ -271,6 +302,8 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Setup a new round, generates an empty grid
     public static void newGame()
     {
+        if (!setup)
+            return;
         gameOver = false;
         redsTurn = true;
         redWins = false;
@@ -327,12 +360,12 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         if (target.down.data != null)
         {
-            EventSystem.triggerEvent("Chip_Placed");
+
             if (target.data.Red())
                 EventSystem.triggerEvent("Red_Chip_Placed");
             else
                 EventSystem.triggerEvent("Blue_Chip_Placed");
-
+            EventSystem.triggerEvent("Chip_Placed");
         }
         else
         {
@@ -373,11 +406,11 @@ public class Connect4View extends SurfaceView implements Runnable {
                     isFalling = true;
 
                     if (check.down.down == null || check.down.down.data != null) {
-                        EventSystem.triggerEvent("Chip_Placed");
                         if (check.down.data.Red())
                             EventSystem.triggerEvent("Red_Chip_Placed");
                         else
                             EventSystem.triggerEvent("Blue_Chip_Placed");
+                        EventSystem.triggerEvent("Chip_Placed");
                     }
                 }
                 check = check.up;

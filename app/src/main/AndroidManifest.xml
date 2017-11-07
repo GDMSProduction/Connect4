@@ -16,10 +16,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".Connect4Game"
-            android:theme="@style/generalnotitle"
-            android:screenOrientation="sensorLandscape">
+        <activity android:name=".Connect4Game"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/generalnotitle">
+        </activity>
+        <activity android:name=".Strategic4Game"
+            android:screenOrientation="sensorLandscape"
+            android:theme="@style/generalnotitle">
         </activity>
     </application>
 
