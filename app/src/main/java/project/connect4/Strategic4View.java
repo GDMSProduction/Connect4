@@ -26,13 +26,36 @@ public class Strategic4View extends Connect4View implements Runnable {
 
     private static void onChip_Placed()
     {
+        switch (eventChipTarget.getType())
+        {
+            case 5:
+            case 1://bomb
+                EventSystem.triggerEvent("Bomb_Placed");
+                break;
+            case 2://defuse
+            case 6:
+                EventSystem.triggerEvent("Defuse_Placed");
+                break;
+            case 3://wood
+            case 7:
+                EventSystem.triggerEvent("Wood_Placed");
+                break;
+        }
+
+        if (eventChipTarget.Red())
+            EventSystem.triggerEvent("Red_Chip_Placed");
+        else
+            EventSystem.triggerEvent("Blue_Chip_Placed");
+
         //Play a sound effect
         mp.start();
 
         checkAllWins();
 
         //Change turns after a chip was played
-        redsTurn = !redsTurn;
+        if (placedFromInput) {
+            redsTurn = !redsTurn;
+        }
 
         //Clear the temp drag chip
         dragged = null;
@@ -42,26 +65,27 @@ public class Strategic4View extends Connect4View implements Runnable {
         //dragged is the chip that was placed now
         //check type or something
 
+
         //Add some stats
-        for (int j = 0; j < team_Drags[1].length; ++j)
-        {
-            team_Drags[1][j].setActive(true);
-        }
-        for (int j = 0; j < team_Drags[0].length; ++j)
-        {
-            team_Drags[0][j].setActive(false);
+        if (placedFromInput) {
+            for (int j = 0; j < team_Drags[1].length; ++j) {
+                team_Drags[1][j].setActive(true);
+            }
+            for (int j = 0; j < team_Drags[0].length; ++j) {
+                team_Drags[0][j].setActive(false);
+            }
         }
     }
     private static void onBlue_Chip_Placed()
     {
         //Add some stats
-        for (int j = 0; j < team_Drags[0].length; ++j)
-        {
-            team_Drags[0][j].setActive(true);
-        }
-        for (int j = 0; j < team_Drags[1].length; ++j)
-        {
-            team_Drags[1][j].setActive(false);
+        if (placedFromInput) {
+            for (int j = 0; j < team_Drags[0].length; ++j) {
+                team_Drags[0][j].setActive(true);
+            }
+            for (int j = 0; j < team_Drags[1].length; ++j) {
+                team_Drags[1][j].setActive(false);
+            }
         }
     }
 
@@ -92,7 +116,10 @@ public class Strategic4View extends Connect4View implements Runnable {
             dragged.resetPosition();
             if (tmp.x >= 0 && tmp.x < 7)
             {
-                addChip(dragged.Red(),tmp.x);
+                if (addChip(dragged.Red(),tmp.x)) {
+                    placedFromInput = true;
+                    dragged.setActive(false);
+                }
             }
             else
                 dragged = null;
@@ -100,15 +127,39 @@ public class Strategic4View extends Connect4View implements Runnable {
     }
     private static void onBomb_Placed()
     {
+        EventSystem.triggerEvent("Bomb_Explode");
     }
     private static void onBomb_Explode()
     {
+        eventNodeTarget.data = null;
+        if (eventNodeTarget.right != null) {
+            explode_Wood(eventNodeTarget.right);
+            eventNodeTarget.right.data = null;
+        }
+        if (eventNodeTarget.left != null) {
+            explode_Wood(eventNodeTarget.left);
+            eventNodeTarget.left.data = null;
+        }
+
+        startFalling = true;
     }
     private static void onDefuse_Placed()
     {
     }
     private static void onWood_Placed()
     {
+    }
+    private static void explode_Wood(MapGrid<Chip>.Node target)
+    {
+        //This is a wood tile
+        if (target != null && target.data != null && target.data.getType()%4 == 3)
+        {
+            target.data = null;
+            explode_Wood(target.up);
+            explode_Wood(target.right);
+            explode_Wood(target.down);
+            explode_Wood(target.left);
+        }
     }
 
     public Strategic4View(Context context)
@@ -215,20 +266,12 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         target.data = new Chip(dragged.im, red,dragged.getType());
 
-        if (target.down.data != null)
-        {
+        if (target.down.data != null) {
+            target.data.isDoneMoving = true;
+        }
 
-            if (target.data.Red())
-                EventSystem.triggerEvent("Red_Chip_Placed");
-            else
-                EventSystem.triggerEvent("Blue_Chip_Placed");
-            EventSystem.triggerEvent("Chip_Placed");
-        }
-        else
-        {
-            startFalling = true;
-            isFalling = true;
-        }
+        startFalling = true;
+        isFalling = true;
 
         return true;
     }

@@ -22,6 +22,7 @@ class Chip
     protected Bitmap im;
     private boolean isRed;
     private int type;
+    boolean isDoneMoving = false;
     Chip(Bitmap _im, boolean _isRed, int _type)
     {
         im = _im;
@@ -130,6 +131,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static boolean gameOver;
     protected static boolean redWins;
     protected static boolean blueWins;
+    protected static boolean placedFromInput;
 
     //The sound for chip placement
     protected static MediaPlayer mp;
@@ -143,15 +145,26 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Draggable chips
     protected static DragChip[] drags;
 
+    //Chip that events are used with
+    protected static Chip eventChipTarget;
+    protected static MapGrid<Chip>.Node eventNodeTarget;
+
     private static void onChip_Placed()
     {
+        if (eventChipTarget.Red())
+            EventSystem.triggerEvent("Red_Chip_Placed");
+        else
+            EventSystem.triggerEvent("Blue_Chip_Placed");
+
         //Play a sound effect
         mp.start();
 
         checkAllWins();
 
         //Change turns after a chip was played
-        redsTurn = !redsTurn;
+        if (placedFromInput) {
+            redsTurn = !redsTurn;
+        }
 
         //Clear the temp drag chip
         dragged = null;
@@ -162,14 +175,20 @@ public class Connect4View extends SurfaceView implements Runnable {
         //check type or something
 
         //Add some stats
-        drags[1].setActive(true);
-        drags[0].setActive(false);
+
+        if (placedFromInput) {
+            drags[1].setActive(true);
+            drags[0].setActive(false);
+        }
     }
     private static void onBlue_Chip_Placed()
     {
         //Add some stats
-        drags[0].setActive(true);
-        drags[1].setActive(false);
+
+        if (placedFromInput) {
+            drags[0].setActive(true);
+            drags[1].setActive(false);
+        }
 
     }
     protected static void onRed_Wins()
@@ -216,7 +235,8 @@ public class Connect4View extends SurfaceView implements Runnable {
             dragged.resetPosition();
             if (tmp.x >= 0 && tmp.x < 7)
             {
-                addChip(dragged.Red(),tmp.x);
+                if (addChip(dragged.Red(),tmp.x))
+                    placedFromInput = true;
             }
             else
                 dragged = null;
@@ -381,20 +401,12 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         target.data = new Chip(red?chipRed:chipBlue, red,0);
 
-        if (target.down.data != null)
-        {
+        if (target.down.data != null) {
+            target.data.isDoneMoving = true;
+        }
 
-            if (target.data.Red())
-                EventSystem.triggerEvent("Red_Chip_Placed");
-            else
-                EventSystem.triggerEvent("Blue_Chip_Placed");
-            EventSystem.triggerEvent("Chip_Placed");
-        }
-        else
-        {
-            startFalling = true;
-            isFalling = true;
-        }
+        startFalling = true;
+        isFalling = true;
 
         return true;
     }
@@ -414,28 +426,44 @@ public class Connect4View extends SurfaceView implements Runnable {
         isFalling = false;
         //Go through every width
         MapGrid<Chip>.Node width = mapGrid.getNodeCoord(0,4);
+        Chip fallCheck = null;
+        MapGrid<Chip>.Node fallTarget = null;
         while (width != null)
         {
             //Go through every height
             MapGrid<Chip>.Node check = width;
             while (check != null)
             {
+                fallCheck = check.data;
+                fallTarget = check;
                 //Can we move down?
-                if (check.data != null && check.down.data == null)
+                if (fallCheck != null)
                 {
                     //Move it down here
-                    check.down.data = check.data;
-                    check.data = null;
-                    isFalling = true;
+                    if (check.down.data == null) {
+                        check.down.data = check.data;
+                        check.data = null;
 
-                    if (check.down.down == null || check.down.down.data != null) {
-                        if (check.down.data.Red())
-                            EventSystem.triggerEvent("Red_Chip_Placed");
-                        else
-                            EventSystem.triggerEvent("Blue_Chip_Placed");
+                        isFalling = true;
+                        check.down.data.isDoneMoving = false;
+                        if (check.down.down == null || check.down.down.data != null) {
+                            check.down.data.isDoneMoving = true;
+                            fallCheck = check.down.data;
+                            fallTarget = check.down;
+                        }
+                    }
+                    if (fallCheck.isDoneMoving)
+                    {
+                        fallCheck.isDoneMoving = false;
+                        eventChipTarget = fallCheck;
+                        eventNodeTarget = fallTarget;
                         EventSystem.triggerEvent("Chip_Placed");
+                        eventChipTarget = null;
+                        eventNodeTarget = null;
+                        placedFromInput = false;
                     }
                 }
+
                 check = check.up;
             }
             width = width.right;
