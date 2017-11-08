@@ -7,6 +7,17 @@
     android:background="@drawable/background_cut"
     tools:context="project.connect4.MainMenu">
 
+    <Button
+        android:id="@+id/btn_start_strat4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Start Strat4"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.73"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -20,12 +31,13 @@
         app:layout_constraintVertical_bias="0.115" />
 
     <Button
-        android:id="@+id/btn_start_game"
+        android:id="@+id/btn_start_con4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Game"
+        android:text="Start Con4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.189"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -33,13 +45,12 @@
         android:id="@+id/btn_reset_game"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="12dp"
-        android:text="Reset Game"
-        app:layout_constraintEnd_toEndOf="@+id/btn_start_game"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toStartOf="@+id/btn_start_game"
-        app:layout_constraintTop_toBottomOf="@+id/btn_start_game"
-        android:layout_marginLeft="8dp" />
+        android:layout_marginTop="8dp"
+        android:text="Reset Games"
+        app:layout_constraintEnd_toStartOf="@+id/btn_start_strat4"
+        app:layout_constraintStart_toEndOf="@+id/btn_start_con4"
+        app:layout_constraintTop_toBottomOf="@+id/btn_start_strat4" />
 
 </android.support.constraint.ConstraintLayout>
