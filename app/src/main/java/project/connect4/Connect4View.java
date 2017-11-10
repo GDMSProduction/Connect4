@@ -1,6 +1,8 @@
 package project.connect4;
 
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -11,6 +13,19 @@ import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONStringer;
 
 /**
  * Created by Philip on 10/26/2017.
@@ -149,6 +164,11 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static Chip eventChipTarget;
     protected static MapGrid<Chip>.Node eventNodeTarget;
 
+    protected static boolean useOnline = false;
+    private static final String baseURL = "https://starcatcher.us/connect4/";
+    static RequestQueue queue;
+    protected static int netID = 1;
+
     private static void onChip_Placed()
     {
         if (eventChipTarget.Red())
@@ -164,6 +184,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Change turns after a chip was played
         if (placedFromInput) {
             redsTurn = !redsTurn;
+            if (useOnline)
+                netGameState = (netIsRed==redsTurn?1:2);
         }
 
         //Clear the temp drag chip
@@ -214,9 +236,11 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
-        for (int i = 0; i < drags.length; ++i) {
-            if (drags[i].isInside((int) tmpX, (int) tmpY)) {
-                dragged = drags[i];
+        if (!useOnline || redsTurn == netIsRed) {
+            for (int i = 0; i < drags.length; ++i) {
+                if (drags[i].isInside((int) tmpX, (int) tmpY)) {
+                    dragged = drags[i];
+                }
             }
         }
     }
@@ -235,25 +259,50 @@ public class Connect4View extends SurfaceView implements Runnable {
             dragged.resetPosition();
             if (tmp.x >= 0 && tmp.x < 7)
             {
-                if (addChip(dragged.Red(),tmp.x))
+                if (addChip(dragged.Red(),tmp.x,dragged.Red()?chipRed:chipBlue,0)) {
                     placedFromInput = true;
+                    dragged.setActive(false);
+                    if (useOnline) {
+                        online_KeepAlive();
+                        online_SendEvent(1, tmp.x, dragged.Red() ? 0 : 4);
+                    }
+                }
             }
             else
                 dragged = null;
         }
     }
+    AlertDialog.Builder builder1;
+    AlertDialog mainAlert;
+    public void newAlert(String msg)
+    {
+        builder1.setMessage(msg);
+        builder1.setCancelable(true);
+
+        if (mainAlert != null && mainAlert.isShowing())
+            mainAlert.cancel();
+
+        mainAlert = builder1.create();
+        mainAlert.show();
+    }
+
     //Class constructor
     public Connect4View(Context context) {
         super(context);
         surfaceHolder = getHolder();
         fontPaint = new Paint();
         fontPaint.setTextSize(45f);
-
+        builder1 = new AlertDialog.Builder(context);
 
         //The first time this is made, setup statics
         if (!setup)
         {
             setupOnce(context);
+            queue = Volley.newRequestQueue(context);
+            if (useOnline)
+            {
+                online_Connect();
+            }
             newGame();
         }
     }
@@ -318,6 +367,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         chipBlue = Bitmap.createBitmap(sprite,150,0,150,150);
         chipYellow = Bitmap.createBitmap(sprite,0,150,150,150);
 
+
         //End game images
         blueWins_image = BitmapFactory.decodeResource(context.getResources(),R.drawable.winnerblue, options);
         redWins_image = BitmapFactory.decodeResource(context.getResources(),R.drawable.winnerred, options);
@@ -353,9 +403,13 @@ public class Connect4View extends SurfaceView implements Runnable {
         blueWins = false;
         isFalling = false;
         startFalling = false;
+        netID = 0;
+        netGameState = -1;
+        netMoveCount = 0;
         drags[0].setActive(true);
         drags[1].setActive(false);
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,14,12,12));
+
     }
 
     @Override
@@ -390,7 +444,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         return true;
     }
-    public static boolean addChip(boolean red, int column)
+    public static boolean addChip(boolean red, int column, Bitmap _im, int _type)
     {
         if (gameOver || isFalling)
             return false;
@@ -399,7 +453,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (target.data != null)
             return false;
 
-        target.data = new Chip(red?chipRed:chipBlue, red,0);
+        target.data = new Chip(_im, red,_type);
+
 
         if (target.down.data != null) {
             target.data.isDoneMoving = true;
@@ -476,6 +531,13 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static boolean startFalling = false;
     //A previous falling state to see when we are done
     protected static boolean wasFalling = false;
+    private static long timeNow;
+
+    //Game states for online -1 none, 0 waiting for player, 1 my turn, 2 other turn
+    protected static int netGameState = -1;
+    //Are we red or blue online
+    protected static boolean netIsRed = true;
+
     protected void update() {
         wasFalling = isFalling;
 
@@ -491,6 +553,32 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (startFalling)
         {
             startFalling = false;
+        }
+        if (useOnline) {
+            long newTime = System.currentTimeMillis()/1000;
+            switch(netGameState) {
+                case 0:
+                    //Waiting for players...
+                    if (newTime - timeNow > 3){
+                        online_Waiting();
+                        online_KeepAlive();
+                        timeNow = newTime;
+                    }
+                    break;
+                case 1:
+                    if (newTime - timeNow > 8){
+                        online_KeepAlive();
+                        timeNow = newTime;
+                    }
+                    break;
+                case 2:
+                    //Process turns from the server every two seconds
+                    if (newTime - timeNow > 2){
+                        online_GetTurns();
+                        timeNow = newTime;
+                    }
+                break;
+            }
         }
     }
 
@@ -731,5 +819,152 @@ public class Connect4View extends SurfaceView implements Runnable {
 
 
         return false;
+    }
+
+    public Bitmap getImageofChip(int type)
+    {
+        return drags[type/4].im;
+    }
+    public boolean getTeamofChip(int type)
+    {
+        return drags[type/4].Red();
+    }
+
+    protected static int netGameID = 1;
+    public void online_Connect()
+    {
+        String reqURL = baseURL + "test.lua?action=connect&game=" + netGameID;
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            netID = response.getInt("ID");
+                            netIsRed = response.getBoolean("isRed");
+                            //Move to waiting state
+                            netGameState = 0;
+                            if (netIsRed) {
+                                newAlert("Waiting for player in room" + netID);
+                            }
+
+                        } catch (JSONException e) {
+                            newAlert("JSON error. " + reqURL);
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        newAlert("HTTP error " + reqURL);
+                    }
+                });
+        queue.add(jsObjRequest);
+    }
+    public void online_Waiting()
+    {
+        String reqURL = baseURL + netID +".txt";
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            if (response.getBoolean("started"))
+                            {
+                                if (netIsRed)
+                                    netGameState = 1;
+                                else
+                                    netGameState = 2;
+                                newAlert("Ready, you are " + (netIsRed?"First":"Second"));
+                            }
+                        } catch (JSONException e) {
+                            newAlert("JSON error. " + reqURL);
+                        }
+                    }
+                }, new Response.ErrorListener() {
+
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        newAlert("HTTP error " + reqURL);
+                    }
+                });
+        queue.add(jsObjRequest);
+    }
+    protected static int netMoveCount = 0;
+
+
+    public void online_GetTurns()
+    {
+        String reqURL = baseURL + netID +".txt";
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
+
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                             JSONArray moves = response.getJSONArray("moves");
+                             for (int i = netMoveCount; i < moves.length(); i++)
+                             {
+                                 JSONObject move = moves.getJSONObject(i);
+                                 int event = move.getInt("Event");
+                                 //Some events for now, 1=placeChip
+                                 int data = move.getInt("Data");
+                                 //Some data for now, location of placement
+                                 int type = move.getInt("Type");
+                                 //Some data for now, type of placement
+                                 if (event==1) {
+                                     placedFromInput = true;
+                                     addChip(getTeamofChip(type), data, getImageofChip(type), type);
+                                 }
+                                 netMoveCount++;
+                             }
+                        } catch (JSONException e) {
+
+                            newAlert("JSON error. "  + reqURL);
+                        }
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+                        newAlert("HTTP error " + reqURL);
+                    }
+                });
+        queue.add(jsObjRequest);
+    }
+    public static void online_SendEvent(int _event, int _data, int _type)
+    {
+        String reqURL = baseURL + "test.lua?action=move&ID=" + netID + "&Event=" + _event + "&Data=" + _data + "&Type=" + _type;
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        //Don't read our own events
+                        netMoveCount++;
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                });
+        queue.add(jsObjRequest);
+    }
+    public static void online_KeepAlive()
+    {
+        String reqURL = baseURL + "test.lua?action=keepAlive&ID=" + netID;
+        JsonObjectRequest jsObjRequest = new JsonObjectRequest
+                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+
+                    }
+                }, new Response.ErrorListener() {
+                    @Override
+                    public void onErrorResponse(VolleyError error) {
+
+                    }
+                });
+        queue.add(jsObjRequest);
     }
 }

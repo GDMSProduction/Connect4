@@ -1,5 +1,6 @@
 package project.connect4;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -7,6 +8,8 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.media.MediaPlayer;
+
+import com.android.volley.toolbox.Volley;
 
 /**
  * Created by User on 11/7/2017.
@@ -20,6 +23,8 @@ public class Strategic4View extends Connect4View implements Runnable {
     private static Bitmap chipBomb;
     private static Bitmap chipWood;
     private static Bitmap chipDefuse;
+
+    protected static MediaPlayer bomb_explode_sound;
 
     //First index is TEAM, second index is chip options
     protected static DragChip[][] team_Drags;
@@ -55,6 +60,8 @@ public class Strategic4View extends Connect4View implements Runnable {
         //Change turns after a chip was played
         if (placedFromInput) {
             redsTurn = !redsTurn;
+            if (useOnline)
+                netGameState = 2;
         }
 
         //Clear the temp drag chip
@@ -92,13 +99,14 @@ public class Strategic4View extends Connect4View implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
-        for (int i = 0; i < team_Drags.length; ++i) {
-                for (int j = 0; j < team_Drags[i].length; ++j)
-                {
+        if (!useOnline || redsTurn == netIsRed) {
+            for (int i = 0; i < team_Drags.length; ++i) {
+                for (int j = 0; j < team_Drags[i].length; ++j) {
                     if (team_Drags[i][j].isInside((int) tmpX, (int) tmpY)) {
                         dragged = team_Drags[i][j];
                     }
                 }
+            }
         }
     }
     private static void onTouch_Move()
@@ -116,9 +124,14 @@ public class Strategic4View extends Connect4View implements Runnable {
             dragged.resetPosition();
             if (tmp.x >= 0 && tmp.x < 7)
             {
-                if (addChip(dragged.Red(),tmp.x)) {
+
+                if (addChip(dragged.Red(),tmp.x,dragged.im,dragged.getType())) {
                     placedFromInput = true;
                     dragged.setActive(false);
+                    if (useOnline) {
+                        online_KeepAlive();
+                        online_SendEvent(1, tmp.x, dragged.getType());
+                    }
                 }
             }
             else
@@ -140,7 +153,7 @@ public class Strategic4View extends Connect4View implements Runnable {
             explode_Wood(eventNodeTarget.left);
             eventNodeTarget.left.data = null;
         }
-
+        bomb_explode_sound.start();
         startFalling = true;
     }
     private static void onDefuse_Placed()
@@ -165,11 +178,16 @@ public class Strategic4View extends Connect4View implements Runnable {
     public Strategic4View(Context context)
     {
         super(context,false);
-
+        builder1 = new AlertDialog.Builder(context);
         //The first time this is made, setup statics
         if (!setup)
         {
             setupOnce(context);
+            queue = Volley.newRequestQueue(context);
+            if (useOnline)
+            {
+                online_Connect();
+            }
             newGame();
         }
     }
@@ -177,8 +195,12 @@ public class Strategic4View extends Connect4View implements Runnable {
     {
         setup = true;
 
+        netGameID = 2;
+
         //The click sound
         mp = MediaPlayer.create(context,R.raw.chip_click);
+        //The click sound
+        bomb_explode_sound = MediaPlayer.create(context,R.raw.bombexplosion);
 
         //Image loading options
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -245,6 +267,9 @@ public class Strategic4View extends Connect4View implements Runnable {
         blueWins = false;
         isFalling = false;
         startFalling = false;
+        netID = 0;
+        netGameState = -1;
+        netMoveCount = 0;
         for (int j = 0; j < team_Drags[1].length; ++j)
         {
             team_Drags[0][j].setActive(true);
@@ -254,26 +279,6 @@ public class Strategic4View extends Connect4View implements Runnable {
             team_Drags[1][j].setActive(false);
         }
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,14,12,12));
-    }
-    public static boolean addChip(boolean red, int column)
-    {
-        if (gameOver || isFalling)
-            return false;
-        MapGrid<Chip>.Node target = mapGrid.getNodeCoord(column,0);
-
-        if (target.data != null)
-            return false;
-
-        target.data = new Chip(dragged.im, red,dragged.getType());
-
-        if (target.down.data != null) {
-            target.data.isDoneMoving = true;
-        }
-
-        startFalling = true;
-        isFalling = true;
-
-        return true;
     }
     protected void draw() {
         //Need a valid surface to draw
@@ -331,6 +336,27 @@ public class Strategic4View extends Connect4View implements Runnable {
             //Unlocking the canvas
             surfaceHolder.unlockCanvasAndPost(canvas);
         }
+    }
+
+    public Bitmap getImageofChip(int type)
+    {
+        for (int i = 0; i < team_Drags.length; ++i) {
+            for (int j = 0; j < team_Drags[i].length; ++j) {
+                if (team_Drags[i][j].getType() == type)
+                    return team_Drags[i][j].im;
+            }
+        }
+        return null;
+    }
+    public boolean getTeamofChip(int type)
+    {
+        for (int i = 0; i < team_Drags.length; ++i) {
+            for (int j = 0; j < team_Drags[i].length; ++j) {
+                if (team_Drags[i][j].getType() == type)
+                    return team_Drags[i][j].Red();
+            }
+        }
+        return false;
     }
 
     @Override

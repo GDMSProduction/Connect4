@@ -6,12 +6,14 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ToggleButton;
 
 
 public class MainMenu extends AppCompatActivity {
 
     private Button startCon4;
     private Button startStrat4;
+    private ToggleButton tgle;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -24,6 +26,14 @@ public class MainMenu extends AppCompatActivity {
         startStrat4 = (Button)findViewById(R.id.btn_start_strat4);
         startStrat4.setOnClickListener(this::onClickStrat4);
 
+        tgle = (ToggleButton)findViewById(R.id.btn_toggle_online);
+        tgle.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Connect4View.useOnline = tgle.isChecked();
+                Connect4View.setup = false;
+            }
+        });
         Button btn_reset= (Button) findViewById(R.id.btn_reset_game);
         btn_reset.setOnClickListener(new View.OnClickListener() {
             @Override
