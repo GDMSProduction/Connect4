@@ -169,7 +169,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static boolean useOnline = false;
     private static final String baseURL = "https://starcatcher.us/connect4/";
     static RequestQueue queue;
-    protected static int netID = 1;
+    protected static int netID = 0;
 
     private static void onChip_Placed()
     {
@@ -302,10 +302,6 @@ public class Connect4View extends SurfaceView implements Runnable {
         {
             setupOnce(context);
             queue = Volley.newRequestQueue(context);
-            if (useOnline)
-            {
-                online_Connect();
-            }
             newGame();
         }
     }
@@ -314,7 +310,6 @@ public class Connect4View extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         fontPaint = new Paint();
         fontPaint.setTextSize(45f);
-
 
         //The first time this is made, setup statics
         if (!setup && doSetup)
@@ -399,7 +394,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         EventSystem.addHook("Touch_Up",Connect4View::onTouch_Up);
     }
     //Setup a new round, generates an empty grid
-    public static void newGame()
+    public void newGame()
     {
         if (!setup)
             return;
@@ -611,7 +606,6 @@ public class Connect4View extends SurfaceView implements Runnable {
             if (redsTurn) {
                 //canvas.drawBitmap(chipRed, 25, 25, null);
                 canvas.drawText("RED Turn",5,215,fontPaint);
-
             }
             else {
                 //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
@@ -674,6 +668,10 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (gameOver)
             newGame();
 
+        if (useOnline && netID == 0)
+        {
+            online_Connect();
+        }
         playing = true;
         gameThread = new Thread(this);
         gameThread.start();
@@ -836,11 +834,12 @@ public class Connect4View extends SurfaceView implements Runnable {
     {
         return drags[type/4].Red();
     }
-
-    protected static int netGameID = 1;
+    
+    //Network gameID, Connect4 = 1
+    public int getGameID(){return 1;}
     public void online_Connect()
     {
-        String reqURL = baseURL + "test.lua?action=connect&game=" + netGameID;
+        String reqURL = baseURL + "test.lua?action=connect&game=" + getGameID();
         JsonObjectRequest jsObjRequest = new JsonObjectRequest
                 (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
 

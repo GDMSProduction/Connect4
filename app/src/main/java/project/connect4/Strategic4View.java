@@ -134,7 +134,7 @@ public class Strategic4View extends Connect4View implements Runnable {
                     }
                 }
             }
-            
+
             dragged = null;
         }
     }
@@ -179,23 +179,18 @@ public class Strategic4View extends Connect4View implements Runnable {
     {
         super(context,false);
         builder1 = new AlertDialog.Builder(context);
+
         //The first time this is made, setup statics
         if (!setup)
         {
             setupOnce(context);
             queue = Volley.newRequestQueue(context);
-            if (useOnline)
-            {
-                online_Connect();
-            }
             newGame();
         }
     }
     private void setupOnce(Context context)
     {
         setup = true;
-
-        netGameID = 2;
 
         //The click sound
         mp = MediaPlayer.create(context,R.raw.chip_click);
@@ -257,7 +252,7 @@ public class Strategic4View extends Connect4View implements Runnable {
         EventSystem.addHook("Wood_Placed",Strategic4View::onWood_Placed);
    }
     //Setup a new round, generates an empty grid
-    public static void newGame()
+    public void newGame()
     {
         if (!setup)
             return;
@@ -370,25 +365,6 @@ public class Strategic4View extends Connect4View implements Runnable {
             team_Drags[1][j].setPosition(x-175,25 + j*175);
         }
     }
-    public void resume() {
-        //when the game is resumed
-        //starting the thread again
-        if (gameOver)
-            newGame();
-
-        playing = true;
-        gameThread = new Thread(this);
-        gameThread.start();
-    }
-
-    @Override
-    public void run() {
-        while (playing) {
-            update();
-
-            draw();
-
-            sleep();
-        }
-    }
+    //Network gameID, Strategic4 = 2
+    public int getGameID(){return 2;}
 }
