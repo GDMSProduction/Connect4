@@ -17,10 +17,12 @@
             </intent-filter>
         </activity>
         <activity android:name=".Connect4Game"
+            android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/generalnotitle">
         </activity>
         <activity android:name=".Strategic4Game"
+            android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/generalnotitle">
         </activity>
