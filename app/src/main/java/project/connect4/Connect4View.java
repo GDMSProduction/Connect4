@@ -131,6 +131,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     //Images
     protected static Bitmap background;
+    protected static Bitmap gameField;
     protected static Bitmap chipRed;
     protected static Bitmap chipBlue;
     protected static Bitmap chipYellow;
@@ -322,11 +323,13 @@ public class Connect4View extends SurfaceView implements Runnable {
             newGame();
         }
     }
+    public static Rect viewSize;
     @Override
     public void onSizeChanged(int x, int y, int w, int h) {
         super.onSizeChanged(x,y,w,h);
         if (x == 0)
             return;
+        viewSize = new Rect(0,0,x,y);
         //Resize anything that may have needed it
         if (drags != null)
             drags[1].setPosition(x-175,25);
@@ -359,9 +362,10 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     protected static void setupImages(Context context, BitmapFactory.Options options)
     {
-
         //The main game background
         background = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4board, options);
+
+        gameField = BitmapFactory.decodeResource(context.getResources(),R.drawable.field, options);
 
         //Load piece image, and split it into colors
         Bitmap sprite = BitmapFactory.decodeResource(context.getResources(),R.drawable.connect4chips, options);
@@ -598,6 +602,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
             //drawing a background color for canvas
             canvas.drawColor(Color.argb(255,25,180,25));
+            //canvas.drawBitmap(gameField,null,viewSize, null);
 
             mapGrid.Draw(canvas, this, chipDraw);
 
