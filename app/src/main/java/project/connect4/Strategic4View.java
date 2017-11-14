@@ -113,7 +113,7 @@ public class Strategic4View extends Connect4View implements Runnable {
     {
         if (dragged != null && dragged.getActive())
         {
-            dragged.movePosition((int)tmpX-75,(int)tmpY-75);
+            dragged.movePosition((int)(tmpX-(chipSize/2)),(int)(tmpY-(chipSize/2)));
         }
     }
     private static void onTouch_Up()
@@ -335,11 +335,24 @@ public class Strategic4View extends Connect4View implements Runnable {
 
     public Bitmap getImageofChip(int type)
     {
-        for (int i = 0; i < team_Drags.length; ++i) {
-            for (int j = 0; j < team_Drags[i].length; ++j) {
-                if (team_Drags[i][j].getType() == type)
-                    return team_Drags[i][j].im;
-            }
+        switch(type)
+        {
+            case 0:
+                return chipRed;
+            case 1:
+                return chipBomb;
+            case 2:
+                return chipDefuse;
+            case 3:
+                return chipWood;
+            case 4:
+                return chipBlue;
+            case 5:
+                return chipBomb;
+            case 6:
+                return chipDefuse;
+            case 7:
+                return chipWood;
         }
         return null;
     }
@@ -359,10 +372,17 @@ public class Strategic4View extends Connect4View implements Runnable {
         super.onSizeChanged(x,y,w,h);
         if (x == 0)
             return;
+        chipWood = Bitmap.createScaledBitmap(chipWood,chipSize,chipSize,false);
+        chipBomb = Bitmap.createScaledBitmap(chipBomb,chipSize,chipSize,false);
         //Resize anything that may have needed it
+        for (int j = 0; j < team_Drags[0].length; ++j)
+        {
+            team_Drags[0][j].im = getImageofChip(team_Drags[0][j].getType());
+        }
         for (int j = 0; j < team_Drags[1].length; ++j)
         {
             team_Drags[1][j].setPosition(x-175,25 + j*175);
+            team_Drags[1][j].im = getImageofChip(team_Drags[1][j].getType());
         }
     }
     //Network gameID, Strategic4 = 2

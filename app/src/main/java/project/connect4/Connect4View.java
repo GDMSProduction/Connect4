@@ -135,6 +135,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static Bitmap chipRed;
     protected static Bitmap chipBlue;
     protected static Bitmap chipYellow;
+    protected static int chipSize = 150;
 
     protected static Bitmap blueWins_image;
     protected static Bitmap redWins_image;
@@ -250,7 +251,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     {
         if (dragged != null && dragged.getActive())
         {
-            dragged.movePosition((int)tmpX-75,(int)tmpY-75);
+            dragged.movePosition((int)(tmpX-(chipSize/2)),(int)(tmpY-(chipSize/2)));
         }
     }
     private static void onTouch_Up()
@@ -325,9 +326,16 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (x == 0)
             return;
         viewSize = new Rect(0,0,x,y);
+        float scale = (y/1080.0f);
+        chipSize = (int)(150*scale);
+        chipRed = Bitmap.createScaledBitmap(chipRed,chipSize,chipSize,false);
+        chipBlue = Bitmap.createScaledBitmap(chipBlue,chipSize,chipSize,false);
+        chipYellow = Bitmap.createScaledBitmap(chipYellow,chipSize,chipSize,false);
         //Resize anything that may have needed it
         if (drags != null)
             drags[1].setPosition(x-175,25);
+        drags[0].im = chipRed;
+        drags[1].im = chipBlue;
     }
     private void setupOnce(Context context)
     {
