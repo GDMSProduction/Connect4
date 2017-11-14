@@ -414,7 +414,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         netMoveCount = 0;
         drags[0].setActive(true);
         drags[1].setActive(false);
-        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,14,12,12));
+        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,7,7));
 
     }
 

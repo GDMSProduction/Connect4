@@ -278,7 +278,7 @@ public class Strategic4View extends Connect4View implements Runnable {
         {
             team_Drags[1][j].setActive(false);
         }
-        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,14,12,12));
+        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,7,7));
     }
     protected void draw() {
         //Need a valid surface to draw
