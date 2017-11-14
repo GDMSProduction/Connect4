@@ -90,7 +90,9 @@ public class MapGrid<T> {
             destAdj = new RectF(Adjustment.left * scaleX, Adjustment.top * scaleY, Adjustment.right * scaleX, Adjustment.bottom * scaleY);
             prevHeight = height;
         }
+
         DrawMap(test);
+
         c.drawBitmap(background,backRect,destBack, paint);
     }
 

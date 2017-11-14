@@ -51,6 +51,7 @@ class Chip
     public int getType() { return type; }
     public void Draw(int x, int y, Canvas c)
     {
+
         c.drawBitmap(im, x, y, null);
     }
 }
@@ -266,10 +267,11 @@ public class Connect4View extends SurfaceView implements Runnable {
                         online_KeepAlive();
                         online_SendEvent(1, tmp.x, dragged.Red() ? 0 : 4);
                     }
+
                 }
+
             }
-            else
-                dragged = null;
+            dragged = null;
         }
     }
     AlertDialog.Builder builder1;

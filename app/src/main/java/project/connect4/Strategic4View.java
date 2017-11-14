@@ -61,7 +61,7 @@ public class Strategic4View extends Connect4View implements Runnable {
         if (placedFromInput) {
             redsTurn = !redsTurn;
             if (useOnline)
-                netGameState = 2;
+                netGameState = (netIsRed==redsTurn?1:2);
         }
 
         //Clear the temp drag chip
@@ -134,8 +134,8 @@ public class Strategic4View extends Connect4View implements Runnable {
                     }
                 }
             }
-            else
-                dragged = null;
+            
+            dragged = null;
         }
     }
     private static void onBomb_Placed()
