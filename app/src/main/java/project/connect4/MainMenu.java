@@ -8,6 +8,8 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.ToggleButton;
 
+import com.android.volley.toolbox.Volley;
+
 
 public class MainMenu extends AppCompatActivity {
 
@@ -41,7 +43,16 @@ public class MainMenu extends AppCompatActivity {
                 Connect4View.setup = false;
             }
         });
+
+        Networking.init(this);
     }
+
+    @Override
+    protected void onStop() {
+        Networking.exit();
+        super.onStop();
+    }
+
     boolean con4_running = false;
     boolean strat4_running = false;
     public void onClickCon4(View v)

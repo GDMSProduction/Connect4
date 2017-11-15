@@ -2,7 +2,6 @@ package project.connect4;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
@@ -14,18 +13,9 @@ import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
-import com.android.volley.Request;
-import com.android.volley.RequestQueue;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.JsonObjectRequest;
-import com.android.volley.toolbox.StringRequest;
-import com.android.volley.toolbox.Volley;
-
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
-import org.json.JSONStringer;
 
 /**
  * Created by Philip on 10/26/2017.
@@ -168,8 +158,6 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static MapGrid<Chip>.Node eventNodeTarget;
 
     protected static boolean useOnline = false;
-    private static final String baseURL = "https://starcatcher.us/connect4/";
-    static RequestQueue queue;
     protected static int netID = 0;
 
     private static void onChip_Placed()
@@ -302,7 +290,6 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (!setup)
         {
             setupOnce(context);
-            queue = Volley.newRequestQueue(context);
             newGame();
         }
     }
@@ -663,6 +650,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         //when the game is paused
         //setting the variable to false
         playing = false;
+        Networking.stopRequests();
         try {
             //stopping the thread
             gameThread.join();
@@ -845,140 +833,80 @@ public class Connect4View extends SurfaceView implements Runnable {
     
     //Network gameID, Connect4 = 1
     public int getGameID(){return 1;}
-    public void online_Connect()
-    {
-        String reqURL = baseURL + "test.lua?action=connect&game=" + getGameID();
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            netID = response.getInt("ID");
-                            netIsRed = response.getBoolean("isRed");
-                            //Move to waiting state
-                            netGameState = 0;
-                            if (netIsRed) {
-                                newAlert("Waiting for player in room" + netID);
-                            }
-
-                        } catch (JSONException e) {
-                            newAlert("JSON error. " + reqURL);
-                        }
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        newAlert("HTTP error " + reqURL);
-                    }
-                });
-        queue.add(jsObjRequest);
-    }
-    public void online_Waiting()
-    {
-        String reqURL = baseURL + netID +".txt";
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            if (response.getBoolean("started"))
-                            {
-                                if (netIsRed)
-                                    netGameState = 1;
-                                else
-                                    netGameState = 2;
-                                newAlert("Ready, you are " + (netIsRed?"First":"Second"));
-                            }
-                        } catch (JSONException e) {
-                            newAlert("JSON error. " + reqURL);
-                        }
-                    }
-                }, new Response.ErrorListener() {
-
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        newAlert("HTTP error " + reqURL);
-                    }
-                });
-        queue.add(jsObjRequest);
-    }
     protected static int netMoveCount = 0;
 
-
-    public void online_GetTurns()
-    {
-        String reqURL = baseURL + netID +".txt";
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
-
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                             JSONArray moves = response.getJSONArray("moves");
-                             for (int i = netMoveCount; i < moves.length(); i++)
-                             {
-                                 JSONObject move = moves.getJSONObject(i);
-                                 int event = move.getInt("Event");
-                                 //Some events for now, 1=placeChip
-                                 int data = move.getInt("Data");
-                                 //Some data for now, location of placement
-                                 int type = move.getInt("Type");
-                                 //Some data for now, type of placement
-                                 if (event==1) {
-                                     placedFromInput = true;
-                                     addChip(getTeamofChip(type), data, getImageofChip(type), type);
-                                 }
-                                 netMoveCount++;
-                             }
-                        } catch (JSONException e) {
-
-                            newAlert("JSON error. "  + reqURL);
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        newAlert("HTTP error " + reqURL);
-                    }
-                });
-        queue.add(jsObjRequest);
+    public void online_Connect(){
+        Networking.Connect(getGameID(), response -> {
+            try {
+                netID = response.getInt("ID");
+                netIsRed = response.getBoolean("isRed");
+                //Move to waiting state
+                netGameState = 0;
+                if (netIsRed) {
+                    newAlert("Connected! Waiting...");
+                }
+            } catch (JSONException e) {
+                newAlert("JSON error while connecting");
+            }
+        },error -> newAlert("Connection failed, " + error.getMessage()));
     }
-    public static void online_SendEvent(int _event, int _data, int _type)
-    {
-        String reqURL = baseURL + "test.lua?action=move&ID=" + netID + "&Event=" + _event + "&Data=" + _data + "&Type=" + _type;
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        //Don't read our own events
-                        netMoveCount++;
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-
-                    }
-                });
-        queue.add(jsObjRequest);
+    public void online_Waiting(){
+        Networking.GetTurns(netID, response -> {
+            try {
+                if (response.getBoolean("started"))
+                {
+                    if (netIsRed)
+                        netGameState = 1;
+                    else
+                        netGameState = 2;
+                    newAlert("Ready, you are " + (netIsRed?"First":"Second"));
+                }
+            } catch (JSONException e) {
+                newAlert("JSON error reading moves");
+            }
+        },error -> {
+            newAlert("This game is over, " + error.getMessage());
+            netGameState = -1;
+            netID = 0;
+        });
     }
-    public static void online_KeepAlive()
-    {
-        String reqURL = baseURL + "test.lua?action=keepAlive&ID=" + netID;
-        JsonObjectRequest jsObjRequest = new JsonObjectRequest
-                (Request.Method.GET, reqURL , null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
 
+    public void online_GetTurns(){
+        Networking.GetTurns(netID, response -> {
+            try {
+                JSONArray moves = response.getJSONArray("moves");
+                for (int i = netMoveCount; i < moves.length(); i++)
+                {
+                    JSONObject move = moves.getJSONObject(i);
+                    int event = move.getInt("Event");
+                    //Some events for now, 1=placeChip
+                    int data = move.getInt("Data");
+                    //Some data for now, location of placement
+                    int type = move.getInt("Type");
+                    //Some data for now, type of placement
+                    if (event==1) {
+                        placedFromInput = true;
+                        addChip(getTeamofChip(type), data, getImageofChip(type), type);
                     }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
+                    netMoveCount++;
+                }
+            } catch (JSONException e) {
 
-                    }
-                });
-        queue.add(jsObjRequest);
+                newAlert("JSON error reading moves");
+            }
+        }, error -> {
+            newAlert("This game is over, " + error.getMessage());
+            netGameState = -1;
+            netID = 0;
+        });
+    }
+    public static void online_SendEvent(int _event, int _data, int _type){
+        Networking.SendEvent(netID,_event,_data,_type, response -> {
+            //Don't read our own events
+            netMoveCount++;
+        });
+    }
+    public static void online_KeepAlive(){
+        Networking.KeepAlive(netID);
     }
 }
