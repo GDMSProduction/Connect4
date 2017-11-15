@@ -319,10 +319,11 @@ public class Connect4View extends SurfaceView implements Runnable {
         chipBlue = Bitmap.createScaledBitmap(chipBlue,chipSize,chipSize,false);
         chipYellow = Bitmap.createScaledBitmap(chipYellow,chipSize,chipSize,false);
         //Resize anything that may have needed it
-        if (drags != null)
-            drags[1].setPosition(x-175,25);
-        drags[0].im = chipRed;
-        drags[1].im = chipBlue;
+        if (drags != null) {
+            drags[1].setPosition(x - 175, 25);
+            drags[0].im = chipRed;
+            drags[1].im = chipBlue;
+        }
     }
     private void setupOnce(Context context)
     {
