@@ -184,7 +184,6 @@ public class Strategic4View extends Connect4View implements Runnable {
         if (!setup)
         {
             setupOnce(context);
-            queue = Volley.newRequestQueue(context);
             newGame();
         }
     }
