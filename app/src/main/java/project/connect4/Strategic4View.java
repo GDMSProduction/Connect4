@@ -55,8 +55,6 @@ public class Strategic4View extends Connect4View implements Runnable {
         //Play a sound effect
         mp.start();
 
-        checkAllWins();
-
         //Change turns after a chip was played
         if (placedFromInput) {
             redsTurn = !redsTurn;

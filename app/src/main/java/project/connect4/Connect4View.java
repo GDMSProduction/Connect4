@@ -170,7 +170,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Play a sound effect
         mp.start();
 
-        checkAllWins();
+
 
         //Change turns after a chip was played
         if (placedFromInput) {
@@ -545,6 +545,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (wasFalling && !isFalling)
         {
             //Something can go here
+            checkAllWins();
         }
         //Delay the fall for one update
         if (startFalling)
@@ -689,23 +690,36 @@ public class Connect4View extends SurfaceView implements Runnable {
     {
         //Check wins
         MapGrid<Chip>.Node tmp = mapGrid.getNodeCoord(0,0);
+        boolean redWon = false;
+        boolean blueWon = false;
         while (tmp != null)
         {
             MapGrid<Chip>.Node tmp2 = tmp;
             while (tmp2 != null) {
                 if (winCheck(tmp2)) {
                     if (tmp2.data.Red())
-                        EventSystem.triggerEvent("Red_Wins");
+                        redWon = true;
                     else
-                        EventSystem.triggerEvent("Blue_Wins");
-                    return;
+                        blueWon = true;
                 }
                 tmp2 = tmp2.down;
             }
 
             tmp = tmp.right;
         }
-        if (!gameOver && tieCheck())
+        if (redWon && blueWon)
+        {
+            EventSystem.triggerEvent("Tie_Game");
+        }
+        else if (redWon)
+        {
+            EventSystem.triggerEvent("Red_Wins");
+        }
+        else if (blueWon)
+        {
+            EventSystem.triggerEvent("Blue_Wins");
+        }
+        else if (!gameOver && tieCheck())
         {
             EventSystem.triggerEvent("Tie_Game");
         }
