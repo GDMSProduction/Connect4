@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.RectF;
 import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -54,6 +55,8 @@ class DragChip extends Chip
     private int width;
     private int height;
     private boolean isActive;
+    public int coolDown;
+    public static Paint coolDownPaint = new Paint();
 
     DragChip(Bitmap _im, boolean _isRed, int _type, int x, int y, int w, int h)
     {
@@ -62,13 +65,17 @@ class DragChip extends Chip
         width = w;
         height = h;
         isActive = true;
+        coolDown = 0;
+        coolDownPaint.setColor(Color.RED);
+        coolDownPaint.setTextSize(95f);
     }
     public boolean isInside(int x, int y)
     {
-        if (isActive && x >= left && x <= left+width && y >= top && y <= top+height)
+        if (isActive && coolDown == 0 && x >= left && x <= left+width && y >= top && y <= top+height)
             return true;
         return false;
     }
+    public void tick(){coolDown--; if (coolDown < 0) {coolDown = 0;}}
     public void setActive(boolean state)
     {
         isActive = state;
@@ -94,8 +101,15 @@ class DragChip extends Chip
     }
     public void Draw(Canvas c)
     {
-        if (isActive)
+        if (isActive) {
             super.Draw(left, top, c);
+            if (coolDown > 0)
+            {
+                c.drawRect(left,top,Connect4View.chipSize + left,Connect4View.chipSize + top,Connect4View.gameOverPaint);
+                c.drawText(Integer.toString(coolDown),left+ (int)(Connect4View.chipSize*0.25),top + (int)(Connect4View.chipSize*0.75),coolDownPaint);
+            }
+        }
+
     }
 }
 

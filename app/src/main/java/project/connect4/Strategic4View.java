@@ -57,6 +57,10 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         //Change turns after a chip was played
         if (placedFromInput) {
+            int team = redsTurn?1:0;
+            for (int i = 0; i < team_Drags[team].length; ++i) {
+                team_Drags[team][i].tick();
+            }
             redsTurn = !redsTurn;
             if (useOnline)
                 netGameState = (netIsRed==redsTurn?1:2);
@@ -138,6 +142,11 @@ public class Strategic4View extends Connect4View implements Runnable {
     }
     private static void onBomb_Placed()
     {
+        if (eventChipTarget.Red())
+            team_Drags[0][1].coolDown = 2;
+        else
+            team_Drags[1][1].coolDown = 2;
+
         EventSystem.triggerEvent("Bomb_Explode");
     }
     private static void onBomb_Explode()
@@ -265,10 +274,12 @@ public class Strategic4View extends Connect4View implements Runnable {
         for (int j = 0; j < team_Drags[1].length; ++j)
         {
             team_Drags[0][j].setActive(true);
+            team_Drags[0][j].coolDown = 0;
         }
         for (int j = 0; j < team_Drags[1].length; ++j)
         {
             team_Drags[1][j].setActive(false);
+            team_Drags[1][j].coolDown = 0;
         }
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,7,7));
     }
