@@ -916,9 +916,9 @@ public class Connect4View extends SurfaceView implements Runnable {
         });
     }
     public static void online_SendEvent(int _event, int _data, int _type){
+        //Don't read our own events
+        netMoveCount++;
         Networking.SendEvent(netID,_event,_data,_type, response -> {
-            //Don't read our own events
-            netMoveCount++;
         });
     }
     public static void online_KeepAlive(){
