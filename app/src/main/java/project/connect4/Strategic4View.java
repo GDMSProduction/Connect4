@@ -281,7 +281,7 @@ public class Strategic4View extends Connect4View implements Runnable {
             team_Drags[1][j].setActive(false);
             team_Drags[1][j].coolDown = 0;
         }
-        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,7,7));
+        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
     }
     protected void draw() {
         //Need a valid surface to draw
@@ -298,12 +298,12 @@ public class Strategic4View extends Connect4View implements Runnable {
 
             if (redsTurn) {
                 //canvas.drawBitmap(chipRed, 25, 25, null);
-                canvas.drawText("RED Turn",5,215,fontPaint);
+                canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
 
             }
             else {
                 //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
-                canvas.drawText("BLUE Turn",getWidth() - 225,215,fontPaint);
+                canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
             }
             for (int i = 0; i < team_Drags.length; ++i)
             {

@@ -29,9 +29,7 @@ public class MapGrid<T> {
         int x;
         int y;
     }
-    Bitmap background;
-    Paint paint;
-    private Rect backRect;
+    protected Bitmap background;
     private RectF destBack;
     private RectF destAdj;
     private Rect Adjustment;
@@ -40,6 +38,8 @@ public class MapGrid<T> {
     private Node map;
     int x;
     int y;
+    float gridSizeX;
+    float gridSizeY;
 
 
     public MapGrid(int _x, int _y, Bitmap _im, Rect adj)
@@ -49,9 +49,7 @@ public class MapGrid<T> {
         GenerateMap(x,y);
 
         Adjustment = adj;
-        paint = new Paint();
         background = _im;
-        backRect = new Rect(0,0,background.getWidth(),background.getHeight());
     }
 
 
@@ -64,14 +62,31 @@ public class MapGrid<T> {
         if (n.data != null)
         {
             Coord tmp = new Coord();
-            tmp.x = (int)(_x + destBack.left + destAdj.left + (((destBack.right - destAdj.right) - (destBack.left + destAdj.left))/(x))*_x);
-            tmp.y = (int)(_y + destBack.top + destAdj.top + (((destBack.bottom - destAdj.bottom) - (destBack.top + destAdj.top))/(y))*_y);
+            tmp.x = (int)(destBack.left + destAdj.left + gridSizeX*_x);
+            tmp.y = (int)(destBack.top + destAdj.top + gridSizeY*_y);
             test.test(n.data,tmp);
         }
         recurseDraw(n.right,_x+1, _y, test);
         if (n.left == null)
             recurseDraw(n.down, _x ,_y+1, test);
 
+    }
+    void changeSize(int x, int y){
+        float height = (float)y;
+        if (prevHeight != height) {
+            float align = height*1.16f;
+            float offset = (x-align)/2;
+            destBack = new RectF(offset, 0.0f, align + offset, height);
+            float scaleX = align / background.getWidth();
+            float scaleY = height / background.getHeight();
+            destAdj = new RectF(Adjustment.left * scaleX, Adjustment.top * scaleY, Adjustment.right * scaleX, Adjustment.bottom * scaleY);
+
+            gridSizeX = ((destBack.right - destAdj.right) - (destBack.left + destAdj.left))/(this.x);
+            gridSizeY = ((destBack.bottom - destAdj.bottom) - (destBack.top + destAdj.top))/(this.y);
+
+            prevHeight = height;
+            background = Bitmap.createScaledBitmap(background,(int)(align),y,false);
+        }
     }
     //Starts the draw on the mapGrid
     void DrawMap(DrawInterface<T> test)
@@ -80,20 +95,10 @@ public class MapGrid<T> {
     }
     public void Draw(Canvas c, View v, DrawInterface<T> test)
     {
-        float height = (float)v.getHeight();
-        if (prevHeight != height) {
-            float align = height*1.16f;
-            float offset = (v.getWidth()-align)/2;
-            destBack = new RectF(offset, 0.0f, align + offset, height);
-            float scaleX = align / background.getWidth();
-            float scaleY = height / background.getHeight();
-            destAdj = new RectF(Adjustment.left * scaleX, Adjustment.top * scaleY, Adjustment.right * scaleX, Adjustment.bottom * scaleY);
-            prevHeight = height;
-        }
-
         DrawMap(test);
 
-        c.drawBitmap(background,backRect,destBack, paint);
+        //c.drawBitmap(background,null,destBack, null);
+        c.drawBitmap(background,destBack.left,0,null);
     }
 
 

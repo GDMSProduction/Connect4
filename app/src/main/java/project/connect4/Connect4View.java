@@ -139,7 +139,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static Bitmap chipRed;
     protected static Bitmap chipBlue;
     protected static Bitmap chipYellow;
-    protected static int chipSize = 150;
+    public static int chipSize = 150;
 
     protected static Bitmap blueWins_image;
     protected static Bitmap redWins_image;
@@ -332,6 +332,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         chipRed = Bitmap.createScaledBitmap(chipRed,chipSize,chipSize,false);
         chipBlue = Bitmap.createScaledBitmap(chipBlue,chipSize,chipSize,false);
         chipYellow = Bitmap.createScaledBitmap(chipYellow,chipSize,chipSize,false);
+        mapGrid.changeSize(x,y);
+
         //Resize anything that may have needed it
         if (drags != null) {
             drags[1].setPosition(x - 175, 25);
@@ -419,7 +421,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         netMoveCount = 0;
         drags[0].setActive(true);
         drags[1].setActive(false);
-        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,7,7));
+        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
 
     }
 
@@ -616,11 +618,11 @@ public class Connect4View extends SurfaceView implements Runnable {
 
             if (redsTurn) {
                 //canvas.drawBitmap(chipRed, 25, 25, null);
-                canvas.drawText("RED Turn",5,215,fontPaint);
+                canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
             }
             else {
                 //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
-                canvas.drawText("BLUE Turn",getWidth() - 225,215,fontPaint);
+                canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
             }
             for (int i =0;i < drags.length; ++i)
             {
