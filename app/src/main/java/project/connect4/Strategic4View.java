@@ -4,6 +4,7 @@ import android.app.AlertDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
@@ -116,6 +117,12 @@ public class Strategic4View extends Connect4View implements Runnable {
         if (dragged != null && dragged.getActive())
         {
             dragged.movePosition((int)(tmpX-(chipSize/2)),(int)(tmpY-(chipSize/2)));
+            MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
+
+            if (tmp.x >= 0 && tmp.x < 7) {
+                //Show a temporary chip
+            }
+            doInvalidate = true;
         }
     }
     private static void onTouch_Up()
@@ -186,7 +193,6 @@ public class Strategic4View extends Connect4View implements Runnable {
     {
         super(context,false);
         builder1 = new AlertDialog.Builder(context);
-
         //The first time this is made, setup statics
         if (!setup)
         {
@@ -283,11 +289,11 @@ public class Strategic4View extends Connect4View implements Runnable {
         }
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
     }
-    protected void draw() {
+    protected void drawGame(Canvas canvas) {
         //Need a valid surface to draw
-        if (surfaceHolder.getSurface().isValid()) {
+        //if (surfaceHolder.getSurface().isValid()) {
             //locking the canvas
-            canvas = surfaceHolder.lockCanvas();
+            //canvas = surfaceHolder.lockCanvas();
 
             //drawing a background color for canvas
             canvas.drawColor(Color.argb(255,25,180,25));
@@ -311,7 +317,6 @@ public class Strategic4View extends Connect4View implements Runnable {
                 {
                     team_Drags[i][j].Draw(canvas);
                 }
-
             }
 
             if (gameOver)
@@ -337,8 +342,8 @@ public class Strategic4View extends Connect4View implements Runnable {
             }
 
             //Unlocking the canvas
-            surfaceHolder.unlockCanvasAndPost(canvas);
-        }
+            //surfaceHolder.unlockCanvasAndPost(canvas);
+        //}
     }
 
     public Bitmap getImageofChip(int type)

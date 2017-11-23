@@ -10,6 +10,7 @@ import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.RectF;
 import android.media.MediaPlayer;
+import android.os.Build;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -42,7 +43,6 @@ class Chip
     public int getType() { return type; }
     public void Draw(int x, int y, Canvas c)
     {
-
         c.drawBitmap(im, x, y, null);
     }
 }
@@ -130,7 +130,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     protected Paint fontPaint;
     protected static Paint gameOverPaint;
-    protected static Canvas canvas;
+    protected static Canvas theCanvas;
     protected SurfaceHolder surfaceHolder;
 
     //Images
@@ -170,6 +170,8 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Chip that events are used with
     protected static Chip eventChipTarget;
     protected static MapGrid<Chip>.Node eventNodeTarget;
+
+    protected static MapGrid<Chip>.Node temporary;
 
     protected static boolean useOnline = false;
     protected static int netID = 0;
@@ -254,6 +256,12 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (dragged != null && dragged.getActive())
         {
             dragged.movePosition((int)(tmpX-(chipSize/2)),(int)(tmpY-(chipSize/2)));
+            MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
+
+            if (tmp.x >= 0 && tmp.x < 7) {
+                //Show a temporary chip
+            }
+            doInvalidate = true;
         }
     }
     private static void onTouch_Up()
@@ -292,6 +300,14 @@ public class Connect4View extends SurfaceView implements Runnable {
         mainAlert.show();
     }
 
+    @Override
+    protected void onDraw(Canvas canvas) {
+        super.onDraw(canvas);
+        theCanvas = canvas;
+        canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-75,fontPaint);
+        drawGame(canvas);
+    }
+
     //Class constructor
     public Connect4View(Context context) {
         super(context);
@@ -299,7 +315,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         fontPaint = new Paint();
         fontPaint.setTextSize(45f);
         builder1 = new AlertDialog.Builder(context);
-
+        this.setWillNotDraw(false);
         //The first time this is made, setup statics
         if (!setup)
         {
@@ -312,7 +328,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         fontPaint = new Paint();
         fontPaint.setTextSize(45f);
-
+        this.setWillNotDraw(false);
         //The first time this is made, setup statics
         if (!setup && doSetup)
         {
@@ -482,9 +498,9 @@ public class Connect4View extends SurfaceView implements Runnable {
     @Override
     public void run() {
         while (playing) {
-            update();
-
-            draw();
+            //update();
+            this.post(() -> update());
+            //draw();
 
             sleep();
         }
@@ -551,22 +567,27 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Are we red or blue online
     protected static boolean netIsRed = true;
 
+    protected static boolean doInvalidate = false;
     protected void update() {
         wasFalling = isFalling;
 
-        if (isFalling && !startFalling)
+        if (isFalling && !startFalling) {
             fallDownTiles();
+            doInvalidate = true;
+        }
 
         //Everything is done moving
         if (wasFalling && !isFalling)
         {
             //Something can go here
             checkAllWins();
+            doInvalidate = true;
         }
         //Delay the fall for one update
         if (startFalling)
         {
             startFalling = false;
+            doInvalidate = true;
         }
         if (useOnline) {
             long newTime = System.currentTimeMillis()/1000;
@@ -594,19 +615,28 @@ public class Connect4View extends SurfaceView implements Runnable {
                 break;
             }
         }
+        if (doInvalidate) {
+            invalidate();
+            doInvalidate = false;
+        }
     }
 
     public static void DrawChip(Chip c, MapGrid<Chip>.Coord loc)
     {
-        c.Draw(loc.x,loc.y,canvas);
+        c.Draw(loc.x,loc.y,theCanvas);
     }
     protected MapGrid.DrawInterface<Chip> chipDraw = Connect4View::DrawChip;
 
-    protected void draw() {
+
+    protected void drawGame(Canvas canvas) {
         //Need a valid surface to draw
-        if (surfaceHolder.getSurface().isValid()) {
+        //if (surfaceHolder.getSurface().isValid()) {
             //locking the canvas
-            canvas = surfaceHolder.lockCanvas();
+
+            //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            //    canvas = surfaceHolder.lockHardwareCanvas();
+            //}
+            //canvas = surfaceHolder.lockCanvas();
 
             //drawing a background color for canvas
             canvas.drawColor(Color.argb(255,25,180,25));
@@ -615,7 +645,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             mapGrid.Draw(canvas, this, chipDraw);
 
             //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
-
+            canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-55,fontPaint);
             if (redsTurn) {
                 //canvas.drawBitmap(chipRed, 25, 25, null);
                 canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
@@ -652,8 +682,8 @@ public class Connect4View extends SurfaceView implements Runnable {
             }
 
             //Unlocking the canvas
-            surfaceHolder.unlockCanvasAndPost(canvas);
-        }
+            //surfaceHolder.unlockCanvasAndPost(canvas);
+        //}
     }
 
     protected void sleep() {
@@ -919,6 +949,7 @@ public class Connect4View extends SurfaceView implements Runnable {
                         placedFromInput = true;
                         addChip(getTeamofChip(type), data, getImageofChip(type), type);
                     }
+                    doInvalidate = true;
                     netMoveCount++;
                 }
             } catch (JSONException e) {
