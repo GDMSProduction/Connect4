@@ -119,8 +119,21 @@ public class Strategic4View extends Connect4View implements Runnable {
             dragged.movePosition((int)(tmpX-(chipSize/2)),(int)(tmpY-(chipSize/2)));
             MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
 
+            hoverChip.active = false;
             if (tmp.x >= 0 && tmp.x < 7) {
                 //Show a temporary chip
+                MapGrid<Chip>.Node target = mapGrid.getNodeCoord(tmp.x,0);
+                while(target.down != null && target.down.data == null)
+                {
+                    target = target.down;
+                    tmp.y++;
+                }
+
+                MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(tmp.x,tmp.y);
+                hoverChip.active = true;
+                hoverChip.x = tmp2.x;
+                hoverChip.y = tmp2.y;
+                hoverChip.im = dragged.im;
             }
             doInvalidate = true;
         }
@@ -145,6 +158,8 @@ public class Strategic4View extends Connect4View implements Runnable {
             }
 
             dragged = null;
+            doInvalidate = true;
+            hoverChip.active = false;
         }
     }
     private static void onBomb_Placed()
@@ -290,60 +305,54 @@ public class Strategic4View extends Connect4View implements Runnable {
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
     }
     protected void drawGame(Canvas canvas) {
-        //Need a valid surface to draw
-        //if (surfaceHolder.getSurface().isValid()) {
-            //locking the canvas
-            //canvas = surfaceHolder.lockCanvas();
 
-            //drawing a background color for canvas
-            canvas.drawColor(Color.argb(255,25,180,25));
+        //drawing a background color for canvas
+        canvas.drawColor(Color.argb(255,25,180,25));
 
-            mapGrid.Draw(canvas, this, chipDraw);
+        hoverChip.Draw(canvas,alphaPaint);
 
-            //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
+        mapGrid.Draw(canvas, this, chipDraw);
 
-            if (redsTurn) {
-                //canvas.drawBitmap(chipRed, 25, 25, null);
-                canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
+        //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
+
+        if (redsTurn) {
+            //canvas.drawBitmap(chipRed, 25, 25, null);
+            canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
+
+        }
+        else {
+            //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
+            canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
+        }
+        for (int i = 0; i < team_Drags.length; ++i)
+        {
+            for (int j = 0; j < team_Drags[i].length; ++j)
+            {
+                team_Drags[i][j].Draw(canvas);
+            }
+        }
+
+        if (gameOver)
+        {
+            if (redWins) {
+                canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
+                canvas.drawBitmap(redWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
+                //gameOverPaint.setColor(Color.argb(127,0,0,0));
+
+            }
+            else if (blueWins) {
+                canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
+                canvas.drawBitmap(blueWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
+                //gameOverPaint.setColor(Color.argb(127,0,0,0));
 
             }
             else {
-                //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
-                canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
+                canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
+                gameOverPaint.setColor(Color.YELLOW);
+                canvas.drawText("Tie Game!", 50, 615, gameOverPaint);
+                gameOverPaint.setColor(Color.argb(127,0,0,0));
             }
-            for (int i = 0; i < team_Drags.length; ++i)
-            {
-                for (int j = 0; j < team_Drags[i].length; ++j)
-                {
-                    team_Drags[i][j].Draw(canvas);
-                }
-            }
-
-            if (gameOver)
-            {
-                if (redWins) {
-                    canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
-                    canvas.drawBitmap(redWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
-                    //gameOverPaint.setColor(Color.argb(127,0,0,0));
-
-                }
-                else if (blueWins) {
-                    canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
-                    canvas.drawBitmap(blueWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
-                    //gameOverPaint.setColor(Color.argb(127,0,0,0));
-
-                }
-                else {
-                    canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
-                    gameOverPaint.setColor(Color.YELLOW);
-                    canvas.drawText("Tie Game!", 50, 615, gameOverPaint);
-                    gameOverPaint.setColor(Color.argb(127,0,0,0));
-                }
-            }
-
-            //Unlocking the canvas
-            //surfaceHolder.unlockCanvasAndPost(canvas);
-        //}
+        }
     }
 
     public Bitmap getImageofChip(int type)

@@ -22,7 +22,7 @@ public class MapGrid<T> {
     }
     @FunctionalInterface
     public interface DrawInterface<t>{
-        void test(t c, MapGrid<t>.Coord loc);
+        void test(t c, int x, int y);
     }
 
     public class Coord{
@@ -61,10 +61,9 @@ public class MapGrid<T> {
 
         if (n.data != null)
         {
-            Coord tmp = new Coord();
-            tmp.x = (int)(destBack.left + destAdj.left + gridSizeX*_x);
-            tmp.y = (int)(destBack.top + destAdj.top + gridSizeY*_y);
-            test.test(n.data,tmp);
+            int tmpx = (int)(destBack.left + destAdj.left + gridSizeX*_x);
+            int tmpy = (int)(destBack.top + destAdj.top + gridSizeY*_y);
+            test.test(n.data,tmpx,tmpy);
         }
         recurseDraw(n.right,_x+1, _y, test);
         if (n.left == null)
@@ -101,12 +100,18 @@ public class MapGrid<T> {
         c.drawBitmap(background,destBack.left,0,null);
     }
 
-
+    public Coord getCoordOfLoc(int _x, int _y){
+        Coord tmp = new Coord();
+        tmp.x = (int)(destBack.left + destAdj.left + gridSizeX*_x);
+        tmp.y = (int)(destBack.top + destAdj.top + gridSizeY*_y);
+        return tmp;
+    }
 
     public Coord getCoordOfTouch(int x, int y)
     {
         Coord tmp = new Coord();
         tmp.x = (int)floor((x - destBack.left)/((destBack.right- destBack.left)/7));
+        tmp.y = 0;
         return tmp;
     }
     public Node getNodeCoord(int x, int y)

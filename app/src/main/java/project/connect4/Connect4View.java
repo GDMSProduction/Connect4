@@ -46,6 +46,22 @@ class Chip
         c.drawBitmap(im, x, y, null);
     }
 }
+class HoverChip{
+    public Bitmap im;
+    public boolean active;
+    public int x;
+    public int y;
+    HoverChip(Bitmap _im, int _x, int _y){
+        im = _im;
+        x = _x;
+        y = _y;
+        active = false;
+    }
+    public void Draw(Canvas c, Paint p) {
+        if (active)
+            c.drawBitmap(im, x, y, p);
+    }
+}
 class DragChip extends Chip
 {
     int originalX;
@@ -129,6 +145,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             "Red_Chip_Placed", "Blue_Wins", "Red_Wins", "Tie_Game", "Touch_Down", "Touch_Move", "Touch_Up"};
 
     protected Paint fontPaint;
+    protected Paint alphaPaint;
     protected static Paint gameOverPaint;
     protected static Canvas theCanvas;
     protected SurfaceHolder surfaceHolder;
@@ -171,7 +188,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static Chip eventChipTarget;
     protected static MapGrid<Chip>.Node eventNodeTarget;
 
-    protected static MapGrid<Chip>.Node temporary;
+    protected static HoverChip hoverChip;
 
     protected static boolean useOnline = false;
     protected static int netID = 0;
@@ -258,8 +275,21 @@ public class Connect4View extends SurfaceView implements Runnable {
             dragged.movePosition((int)(tmpX-(chipSize/2)),(int)(tmpY-(chipSize/2)));
             MapGrid<Chip>.Coord tmp = mapGrid.getCoordOfTouch((int)tmpX,(int)tmpY);
 
+            hoverChip.active = false;
             if (tmp.x >= 0 && tmp.x < 7) {
                 //Show a temporary chip
+                MapGrid<Chip>.Node target = mapGrid.getNodeCoord(tmp.x,0);
+                while(target.down != null && target.down.data == null)
+                {
+                    target = target.down;
+                    tmp.y++;
+                }
+
+                MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(tmp.x,tmp.y);
+                hoverChip.active = true;
+                hoverChip.x = tmp2.x;
+                hoverChip.y = tmp2.y;
+                hoverChip.im = dragged.im;
             }
             doInvalidate = true;
         }
@@ -279,11 +309,11 @@ public class Connect4View extends SurfaceView implements Runnable {
                         online_KeepAlive();
                         online_SendEvent(1, tmp.x, dragged.Red() ? 0 : 4);
                     }
-
                 }
-
             }
             dragged = null;
+            doInvalidate = true;
+            hoverChip.active = false;
         }
     }
     AlertDialog.Builder builder1;
@@ -309,26 +339,17 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
 
     //Class constructor
-    public Connect4View(Context context) {
-        super(context);
-        surfaceHolder = getHolder();
-        fontPaint = new Paint();
-        fontPaint.setTextSize(45f);
-        builder1 = new AlertDialog.Builder(context);
-        this.setWillNotDraw(false);
-        //The first time this is made, setup statics
-        if (!setup)
-        {
-            setupOnce(context);
-            newGame();
-        }
-    }
     public Connect4View(Context context, boolean doSetup) {
         super(context);
         surfaceHolder = getHolder();
         fontPaint = new Paint();
         fontPaint.setTextSize(45f);
+        alphaPaint = new Paint();
+        alphaPaint.setAlpha(127);
+        builder1 = new AlertDialog.Builder(context);
         this.setWillNotDraw(false);
+
+        hoverChip = new HoverChip(null,0,0);
         //The first time this is made, setup statics
         if (!setup && doSetup)
         {
@@ -621,69 +642,59 @@ public class Connect4View extends SurfaceView implements Runnable {
         }
     }
 
-    public static void DrawChip(Chip c, MapGrid<Chip>.Coord loc)
+    public static void DrawChip(Chip c, int x, int y)
     {
-        c.Draw(loc.x,loc.y,theCanvas);
+        c.Draw(x,y,theCanvas);
     }
     protected MapGrid.DrawInterface<Chip> chipDraw = Connect4View::DrawChip;
 
 
     protected void drawGame(Canvas canvas) {
-        //Need a valid surface to draw
-        //if (surfaceHolder.getSurface().isValid()) {
-            //locking the canvas
 
-            //if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            //    canvas = surfaceHolder.lockHardwareCanvas();
-            //}
-            //canvas = surfaceHolder.lockCanvas();
+        //drawing a background color for canvas
+        canvas.drawColor(Color.argb(255,25,180,25));
+        //canvas.drawBitmap(gameField,null,viewSize, null);
 
-            //drawing a background color for canvas
-            canvas.drawColor(Color.argb(255,25,180,25));
-            //canvas.drawBitmap(gameField,null,viewSize, null);
+        hoverChip.Draw(canvas,alphaPaint);
 
-            mapGrid.Draw(canvas, this, chipDraw);
+        mapGrid.Draw(canvas, this, chipDraw);
 
-            //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
-            canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-55,fontPaint);
-            if (redsTurn) {
-                //canvas.drawBitmap(chipRed, 25, 25, null);
-                canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
+        //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
+        canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-55,fontPaint);
+        if (redsTurn) {
+            //canvas.drawBitmap(chipRed, 25, 25, null);
+            canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
+        }
+        else {
+            //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
+            canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
+        }
+        for (int i =0;i < drags.length; ++i)
+        {
+            drags[i].Draw(canvas);
+        }
+
+        if (gameOver)
+        {
+            if (redWins) {
+                canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
+                canvas.drawBitmap(redWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
+                //gameOverPaint.setColor(Color.argb(127,0,0,0));
+
+            }
+            else if (blueWins) {
+                canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
+                canvas.drawBitmap(blueWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
+                //gameOverPaint.setColor(Color.argb(127,0,0,0));
+
             }
             else {
-                //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
-                canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
+                canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
+                gameOverPaint.setColor(Color.YELLOW);
+                canvas.drawText("Tie Game!", 50, 615, gameOverPaint);
+                gameOverPaint.setColor(Color.argb(127,0,0,0));
             }
-            for (int i =0;i < drags.length; ++i)
-            {
-                drags[i].Draw(canvas);
-            }
-
-            if (gameOver)
-            {
-                if (redWins) {
-                    canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
-                    canvas.drawBitmap(redWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
-                    //gameOverPaint.setColor(Color.argb(127,0,0,0));
-
-                }
-                else if (blueWins) {
-                    canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
-                    canvas.drawBitmap(blueWins_image,null,new Rect(50,50,getWidth()-50,getHeight()-50),null);
-                    //gameOverPaint.setColor(Color.argb(127,0,0,0));
-
-                }
-                else {
-                    canvas.drawRect(0,0,getWidth(),getHeight(),gameOverPaint);
-                    gameOverPaint.setColor(Color.YELLOW);
-                    canvas.drawText("Tie Game!", 50, 615, gameOverPaint);
-                    gameOverPaint.setColor(Color.argb(127,0,0,0));
-                }
-            }
-
-            //Unlocking the canvas
-            //surfaceHolder.unlockCanvasAndPost(canvas);
-        //}
+        }
     }
 
     protected void sleep() {

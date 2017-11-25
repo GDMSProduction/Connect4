@@ -14,7 +14,7 @@ public class Connect4Game extends AppCompatActivity {
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
-        conn4View = new Connect4View(this);
+        conn4View = new Connect4View(this, true);
 
         setContentView(conn4View);
     }
