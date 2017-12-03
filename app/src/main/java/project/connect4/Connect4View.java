@@ -8,9 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
-import android.graphics.RectF;
 import android.media.MediaPlayer;
-import android.os.Build;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -18,6 +16,9 @@ import android.view.SurfaceView;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created by Philip on 10/26/2017.
@@ -128,7 +129,43 @@ class DragChip extends Chip
 
     }
 }
-
+class Animation {
+    Bitmap[] ims;
+    int frameCount;
+    boolean loop;
+    int frameDelay;
+    boolean finished;
+    int ticks;
+    int currFrame;
+    int x,y;
+    Animation(Bitmap[] _ims, boolean _loop, int _delay, int _x, int _y){
+        ims = _ims;
+        frameCount = ims.length;
+        loop = _loop;
+        frameDelay = _delay;
+        finished = false;
+        ticks = 0;
+        currFrame = 0;
+        x = _x;
+        y = _y;
+    }
+    void Tick(){
+        if ((ticks%frameDelay) == 0) {
+            currFrame++;
+            if (currFrame >= frameCount) {
+                if (loop)
+                    currFrame = 0;
+                else
+                    finished = true;
+            }
+        }
+        ticks++;
+    }
+    void Draw(Canvas c){
+        if (!finished)
+         c.drawBitmap(ims[currFrame], x, y, null);
+    }
+}
 
 public class Connect4View extends SurfaceView implements Runnable {
     //boolean variable to track if the game is playing or not
@@ -189,6 +226,8 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static MapGrid<Chip>.Node eventNodeTarget;
 
     protected static HoverChip hoverChip;
+
+    protected static List<Animation> anims;
 
     protected static boolean useOnline = false;
     protected static int netID = 0;
@@ -334,7 +373,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         theCanvas = canvas;
-        canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-75,fontPaint);
+        //canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-75,fontPaint);
         drawGame(canvas);
     }
 
@@ -396,6 +435,8 @@ public class Connect4View extends SurfaceView implements Runnable {
         gameOverPaint = new Paint();
         gameOverPaint.setTextSize(360f);
         gameOverPaint.setColor(Color.argb(127,0,0,0));
+
+        anims = new ArrayList<>();
 
         DragChip red_drag = new DragChip(chipRed,true, 0,25,25,150,150);
         DragChip blue_drag = new DragChip(chipBlue,false, 0, 25,25,150,150);
@@ -515,17 +556,33 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         return true;
     }
-
+    final static double TICK_RATE = 16.667;
+    final static double TICKS_PER_SECOND = 1000/TICK_RATE;
     @Override
     public void run() {
+        double lag = 0;
+        long newTime = 0;
+        long lastTime = System.nanoTime()/1000000;
         while (playing) {
-            //update();
-            this.post(() -> update());
-            //draw();
-
+            newTime = System.nanoTime()/1000000;
+            lag +=  newTime - lastTime;
+            lastTime = newTime;
+            while (lag > TICK_RATE) {
+                this.post(() -> update());
+                lag -= TICK_RATE;
+            }
             sleep();
         }
     }
+
+    protected void sleep() {
+        try {
+            gameThread.sleep(4);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static void fallDownTiles()
     {
         isFalling = false;
@@ -589,12 +646,20 @@ public class Connect4View extends SurfaceView implements Runnable {
     protected static boolean netIsRed = true;
 
     protected static boolean doInvalidate = false;
+
+    int dropTicks = 0;
+
     protected void update() {
         wasFalling = isFalling;
 
         if (isFalling && !startFalling) {
-            fallDownTiles();
-            doInvalidate = true;
+            dropTicks++;
+            //Chip drop speed
+            if(dropTicks >= 6) {
+                fallDownTiles();
+                doInvalidate = true;
+                dropTicks = 0;
+            }
         }
 
         //Everything is done moving
@@ -636,10 +701,77 @@ public class Connect4View extends SurfaceView implements Runnable {
                 break;
             }
         }
+
+        for (int i = anims.size()-1; i >= 0 ; i--){
+            if (anims.get(i).finished)
+                anims.remove(i);
+            else
+                anims.get(i).Tick();
+        }
         if (doInvalidate) {
             invalidate();
             doInvalidate = false;
         }
+    }
+    //Add chip without events
+    public void addChipFast(boolean red, int column, Bitmap _im, int _type){
+
+        MapGrid<Chip>.Node target = mapGrid.getNodeCoord(column,0);
+
+        while(target.down != null && target.down.data == null)
+        {
+            target = target.down;
+        }
+        target.data = new Chip(_im, red,_type);
+    }
+    //Pull down all tiles without events
+    public void fallDownFast(){
+        //Go through every width
+        MapGrid<Chip>.Node width = mapGrid.getNodeCoord(0,5);
+        while (width != null)
+        {
+            //Go through every height
+            MapGrid<Chip>.Node check = width;
+            while (check.up != null && check.data == null)
+            {
+                //Is something over us
+                MapGrid<Chip>.Node over = check.up;
+                while (over != null) {
+                    if (over.data != null) {
+                        //Move it here
+                        check.data = over.data;
+                        over.data = null;
+                        break;
+                    }
+                    over = over.up;
+                }
+                check = check.up;
+            }
+            width = width.right;
+        }
+    }
+
+    //Go through a list of all moves and play them
+    public void fastForward(JSONArray moves){
+        try{
+            for (int i = 0; i < moves.length(); i++) {
+                JSONObject move = moves.getJSONObject(i);
+                int event = move.getInt("Event");
+                //Some events for now, 1=placeChip
+                int data = move.getInt("Data");
+                //Some data for now, location of placement
+                int type = move.getInt("Type");
+                //Some data for now, type of placement
+                if (event == 1) {
+                    addChipFast(getTeamofChip(type), data, getImageofChip(type), type);
+                    fallDownFast();
+                }
+            }
+        } catch (JSONException e) {
+            newAlert("JSON error while connecting");
+        }
+        checkAllWins();
+        doInvalidate = true;
     }
 
     public static void DrawChip(Chip c, int x, int y)
@@ -659,8 +791,12 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         mapGrid.Draw(canvas, this, chipDraw);
 
+        for (int i = anims.size()-1; i >= 0 ; i--){
+            anims.get(i).Draw(canvas);
+        }
+
         //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
-        canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-55,fontPaint);
+        //canvas.drawText(canvas.isHardwareAccelerated()?"YES":"NO",5,getHeight()-55,fontPaint);
         if (redsTurn) {
             //canvas.drawBitmap(chipRed, 25, 25, null);
             canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
@@ -694,14 +830,6 @@ public class Connect4View extends SurfaceView implements Runnable {
                 canvas.drawText("Tie Game!", 50, 615, gameOverPaint);
                 gameOverPaint.setColor(Color.argb(127,0,0,0));
             }
-        }
-    }
-
-    protected void sleep() {
-        try {
-            gameThread.sleep(17);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
         }
     }
 

@@ -12,6 +12,8 @@ import android.media.MediaPlayer;
 
 import com.android.volley.toolbox.Volley;
 
+import java.util.ArrayList;
+
 /**
  * Created by User on 11/7/2017.
  */
@@ -24,6 +26,7 @@ public class Strategic4View extends Connect4View implements Runnable {
     private static Bitmap chipBomb;
     private static Bitmap chipWood;
     private static Bitmap chipDefuse;
+    private static Bitmap[] bAnims;
 
     protected static MediaPlayer bomb_explode_sound;
 
@@ -169,6 +172,9 @@ public class Strategic4View extends Connect4View implements Runnable {
         else
             team_Drags[1][1].coolDown = 2;
 
+        MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(eventNodeTarget.x,eventNodeTarget.y);
+        anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
+
         EventSystem.triggerEvent("Bomb_Explode");
     }
     private static void onBomb_Explode()
@@ -177,10 +183,14 @@ public class Strategic4View extends Connect4View implements Runnable {
         if (eventNodeTarget.right != null) {
             explode_Wood(eventNodeTarget.right);
             eventNodeTarget.right.data = null;
+            MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(eventNodeTarget.right.x,eventNodeTarget.right.y);
+            anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
         }
         if (eventNodeTarget.left != null) {
             explode_Wood(eventNodeTarget.left);
             eventNodeTarget.left.data = null;
+            MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(eventNodeTarget.left.x,eventNodeTarget.left.y);
+            anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
         }
         bomb_explode_sound.start();
         startFalling = true;
@@ -197,13 +207,14 @@ public class Strategic4View extends Connect4View implements Runnable {
         if (target != null && target.data != null && target.data.getType()%4 == 3)
         {
             target.data = null;
+            MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(target.x,target.y);
+            anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
             explode_Wood(target.up);
             explode_Wood(target.right);
             explode_Wood(target.down);
             explode_Wood(target.left);
         }
     }
-
     public Strategic4View(Context context)
     {
         super(context,false);
@@ -214,6 +225,7 @@ public class Strategic4View extends Connect4View implements Runnable {
             setupOnce(context);
             newGame();
         }
+        bAnims = new Bitmap[24];
     }
     private void setupOnce(Context context)
     {
@@ -236,6 +248,8 @@ public class Strategic4View extends Connect4View implements Runnable {
         gameOverPaint.setTextSize(360f);
         gameOverPaint.setColor(Color.argb(127,0,0,0));
 
+        anims = new ArrayList<>();
+
         DragChip red_drag = new DragChip(chipRed,true, 0,25,25,150,150);
         DragChip red_bomb_drag = new DragChip(chipBomb,true, 1,25,200,150,150);
         DragChip red_wood_drag = new DragChip(chipWood,true, 3,25,375,150,150);
@@ -253,6 +267,9 @@ public class Strategic4View extends Connect4View implements Runnable {
         Connect4View.setupImages(context,options);
         chipBomb = BitmapFactory.decodeResource(context.getResources(),R.drawable.bombchip, options);
         chipWood = BitmapFactory.decodeResource(context.getResources(),R.drawable.woodchip, options);
+
+
+
     }
     public static void setupEvents() {
 
@@ -304,6 +321,11 @@ public class Strategic4View extends Connect4View implements Runnable {
         }
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
     }
+    @Override
+    protected void update() {
+        super.update();
+        doInvalidate = true;
+    }
     protected void drawGame(Canvas canvas) {
 
         //drawing a background color for canvas
@@ -313,8 +335,11 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         mapGrid.Draw(canvas, this, chipDraw);
 
-        //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
+        for (int i = anims.size()-1; i >= 0 ; i--){
+            anims.get(i).Draw(canvas);
+        }
 
+        //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
         if (redsTurn) {
             //canvas.drawBitmap(chipRed, 25, 25, null);
             canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
@@ -406,7 +431,37 @@ public class Strategic4View extends Connect4View implements Runnable {
             team_Drags[1][j].setPosition(x-175,25 + j*175);
             team_Drags[1][j].im = getImageofChip(team_Drags[1][j].getType());
         }
+
+        for (int i = 1; i <= 24; i++) {
+            bAnims[i-1] = Bitmap.createScaledBitmap( BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(
+                    "banim"+i, "drawable","project.connect4")),chipSize,chipSize, false);
+        }
+
     }
     //Network gameID, Strategic4 = 2
     public int getGameID(){return 2;}
+
+    @Override
+    public void addChipFast(boolean red, int column, Bitmap _im, int _type){
+
+        MapGrid<Chip>.Node target = mapGrid.getNodeCoord(column,0);
+
+        while(target.down != null && target.down.data == null)
+        {
+            target = target.down;
+        }
+        if ((_type%4) == 1){
+            //Bomb goes boom
+            if (target.right != null) {
+                explode_Wood(target.right);
+                target.right.data = null;
+            }
+            if (target.left != null) {
+                explode_Wood(target.left);
+                target.left.data = null;
+            }
+        }
+        else
+            target.data = new Chip(_im, red,_type);
+    }
 }

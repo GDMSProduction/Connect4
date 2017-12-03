@@ -18,6 +18,7 @@ public class MapGrid<T> {
 
     public class Node{
         T data;
+        int x=0,y=0;
         Node up= null, down= null, left= null, right= null;
     }
     @FunctionalInterface
@@ -133,7 +134,7 @@ public class MapGrid<T> {
     {
         if (width < 2 || height < 2)
             return;
-
+        int x=0,y=0;
         Node h = null;
         Node over = null;
         for (int i = 0; i < height; ++i)
@@ -142,6 +143,7 @@ public class MapGrid<T> {
             {
                 //Column 0 is linked up/down
                 h.down = new Node();
+                h.down.y = y;
                 h.down.up = h;
                 over = h.right;
                 h = h.down;
@@ -150,14 +152,18 @@ public class MapGrid<T> {
             {
                 //The very first node
                 h = new Node();
+                h.y = y;
                 map = h;
             }
             h.data = null;
             Node w = h;
+            x = 1;
             for (int j = 0; j < width - 1; ++j)
             {
                 //Rows are linked left/right
                 w.right = new Node();
+                w.right.x = x;
+                w.right.y = y;
                 w.right.left = w;
                 w = w.right;
                 w.data = null;
@@ -168,7 +174,9 @@ public class MapGrid<T> {
                     w.up = over;
                     over = over.right;
                 }
+                x++;
             }
+            y++;
         }
     }
 
