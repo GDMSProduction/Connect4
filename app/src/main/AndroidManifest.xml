@@ -3,7 +3,10 @@
     package="project.connect4">
 
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-feature android:glEsVersion="0x00020000" android:required="true" />
+
+    <uses-feature
+        android:glEsVersion="0x00020000"
+        android:required="true" />
 
     <application
         android:allowBackup="true"
@@ -23,13 +26,13 @@
             android:name=".Connect4Game"
             android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
-            android:theme="@style/generalnotitle"></activity>
+            android:theme="@style/generalnotitle" />
         <activity
             android:name=".Strategic4Game"
             android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
-            android:theme="@style/generalnotitle"></activity>
-        <activity android:name=".OpenGL_Test"></activity>
+            android:theme="@style/generalnotitle" />
+        <activity android:name=".HelpMenu"></activity>
     </application>
 
 </manifest>

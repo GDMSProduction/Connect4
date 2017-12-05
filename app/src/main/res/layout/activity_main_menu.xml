@@ -14,16 +14,17 @@
         android:text="Start Strat4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.73"
+        app:layout_constraintHorizontal_bias="0.826"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Welcome to Connect4 thing!"
+        android:text="Strategic4"
         android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textColor="@android:color/white"
+        android:textSize="28sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
@@ -41,31 +42,43 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
-        android:id="@+id/btn_reset_game"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+    <Switch
+        android:id="@+id/swch_Online"
+        android:layout_width="144dp"
+        android:layout_height="49dp"
+        android:layout_marginBottom="48dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:text="Reset Games"
-        app:layout_constraintEnd_toStartOf="@+id/btn_start_strat4"
-        app:layout_constraintStart_toEndOf="@+id/btn_start_con4"
-        app:layout_constraintTop_toBottomOf="@+id/btn_start_strat4" />
+        android:background="@android:drawable/toast_frame"
+        android:backgroundTint="#99FFFFFF"
+        android:text="Online"
+        android:textAllCaps="false"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
-    <ToggleButton
-        android:id="@+id/btn_toggle_online"
-        android:layout_width="wrap_content"
+    <Button
+        android:id="@+id/btn_Help"
+        android:layout_width="71dp"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:checked="false"
-        android:text="ToggleButton"
-        android:textOff="Online Disabled"
-        android:textOn="Online Enabled"
-        app:layout_constraintEnd_toEndOf="@+id/btn_reset_game"
-        app:layout_constraintStart_toStartOf="@+id/btn_reset_game"
-        app:layout_constraintTop_toBottomOf="@+id/btn_reset_game" />
+        android:text="Help"
+        app:layout_constraintBottom_toTopOf="@+id/btn_Options"
+        app:layout_constraintEnd_toEndOf="@+id/swch_Online"
+        app:layout_constraintStart_toStartOf="@+id/swch_Online" />
+
+    <Button
+        android:id="@+id/btn_Options"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Options"
+        app:layout_constraintBottom_toTopOf="@+id/swch_Online"
+        app:layout_constraintEnd_toEndOf="@+id/swch_Online"
+        app:layout_constraintStart_toStartOf="@+id/swch_Online" />
 
 </android.support.constraint.ConstraintLayout>
