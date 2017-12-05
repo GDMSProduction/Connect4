@@ -357,6 +357,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     AlertDialog.Builder builder1;
     AlertDialog mainAlert;
+    long alertTimer = 0;
     public void newAlert(String msg)
     {
         builder1.setMessage(msg);
@@ -651,7 +652,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     protected void update() {
         wasFalling = isFalling;
-
+        long newTime = System.currentTimeMillis()/1000;
         if (isFalling && !startFalling) {
             dropTicks++;
             //Chip drop speed
@@ -676,7 +677,6 @@ public class Connect4View extends SurfaceView implements Runnable {
             doInvalidate = true;
         }
         if (useOnline) {
-            long newTime = System.currentTimeMillis()/1000;
             switch(netGameState) {
                 case 0:
                     //Waiting for players...
@@ -699,6 +699,10 @@ public class Connect4View extends SurfaceView implements Runnable {
                         timeNow = newTime;
                     }
                 break;
+        if (alertTimer > 0){
+            alertTimer--;
+            if (alertTimer <= 0 ) {
+                mainAlert.cancel();
             }
         }
 
@@ -1060,6 +1064,7 @@ public class Connect4View extends SurfaceView implements Runnable {
                     else
                         netGameState = 2;
                     newAlert("Ready, you are " + (netIsRed?"First":"Second"));
+                    alertTimer = 80;
                 }
             } catch (JSONException e) {
                 newAlert("JSON error reading moves");
