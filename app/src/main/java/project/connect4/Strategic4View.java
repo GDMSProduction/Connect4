@@ -33,6 +33,19 @@ public class Strategic4View extends Connect4View implements Runnable {
     //First index is TEAM, second index is chip options
     protected static DragChip[][] team_Drags;
 
+    protected static void activateButtonsS(boolean red){
+        for (int j = 0; j < team_Drags[0].length; ++j) {
+            team_Drags[0][j].setActive(red==true);
+        }
+        for (int j = 0; j < team_Drags[1].length; ++j) {
+            team_Drags[1][j].setActive(red==false);
+        }
+    }
+    @Override
+    protected void activateButtons(boolean red){
+        activateButtonsS(red);
+    }
+
     private static void onChip_Placed()
     {
         switch (eventChipTarget.getType())
@@ -105,7 +118,7 @@ public class Strategic4View extends Connect4View implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
-        if (!useOnline || redsTurn == netIsRed) {
+        if (!useOnline || (redsTurn == netIsRed && netGameState!=0)) {
             for (int i = 0; i < team_Drags.length; ++i) {
                 for (int j = 0; j < team_Drags[i].length; ++j) {
                     if (team_Drags[i][j].isInside((int) tmpX, (int) tmpY)) {
@@ -165,12 +178,13 @@ public class Strategic4View extends Connect4View implements Runnable {
             hoverChip.active = false;
         }
     }
+    private static int bomb_Cooldown = 2;
     private static void onBomb_Placed()
     {
         if (eventChipTarget.Red())
-            team_Drags[0][1].coolDown = 2;
+            team_Drags[0][1].coolDown = bomb_Cooldown;
         else
-            team_Drags[1][1].coolDown = 2;
+            team_Drags[1][1].coolDown = bomb_Cooldown;
 
         MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(eventNodeTarget.x,eventNodeTarget.y);
         anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
@@ -181,13 +195,13 @@ public class Strategic4View extends Connect4View implements Runnable {
     {
         eventNodeTarget.data = null;
         if (eventNodeTarget.right != null) {
-            explode_Wood(eventNodeTarget.right);
+            explode_Wood(eventNodeTarget.right,true);
             eventNodeTarget.right.data = null;
             MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(eventNodeTarget.right.x,eventNodeTarget.right.y);
             anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
         }
         if (eventNodeTarget.left != null) {
-            explode_Wood(eventNodeTarget.left);
+            explode_Wood(eventNodeTarget.left,true);
             eventNodeTarget.left.data = null;
             MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(eventNodeTarget.left.x,eventNodeTarget.left.y);
             anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
@@ -201,18 +215,20 @@ public class Strategic4View extends Connect4View implements Runnable {
     private static void onWood_Placed()
     {
     }
-    private static void explode_Wood(MapGrid<Chip>.Node target)
+    private static void explode_Wood(MapGrid<Chip>.Node target, boolean anim)
     {
         //This is a wood tile
         if (target != null && target.data != null && target.data.getType()%4 == 3)
         {
             target.data = null;
-            MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(target.x,target.y);
-            anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
-            explode_Wood(target.up);
-            explode_Wood(target.right);
-            explode_Wood(target.down);
-            explode_Wood(target.left);
+            if (anim){
+                MapGrid<Chip>.Coord tmp2 = mapGrid.getCoordOfLoc(target.x,target.y);
+                anims.add(new Animation(bAnims,false,2,tmp2.x,tmp2.y));
+            }
+            explode_Wood(target.up, anim);
+            explode_Wood(target.right, anim);
+            explode_Wood(target.down, anim);
+            explode_Wood(target.left, anim);
         }
     }
     public Strategic4View(Context context)
@@ -450,16 +466,24 @@ public class Strategic4View extends Connect4View implements Runnable {
         {
             target = target.down;
         }
+        //Update cooldown for the other team
+        for (int i = 0; i < team_Drags[red?1:0].length; ++i) {
+            team_Drags[red?1:0][i].tick();
+        }
         if ((_type%4) == 1){
             //Bomb goes boom
             if (target.right != null) {
-                explode_Wood(target.right);
+                explode_Wood(target.right,false);
                 target.right.data = null;
             }
             if (target.left != null) {
-                explode_Wood(target.left);
+                explode_Wood(target.left,false);
                 target.left.data = null;
             }
+            //Move everything down
+            fallDownFast();
+            //Set the bomb cooldown
+            team_Drags[red?0:1][1].coolDown = bomb_Cooldown;
         }
         else
             target.data = new Chip(_im, red,_type);

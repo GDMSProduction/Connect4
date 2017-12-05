@@ -77,4 +77,9 @@ public class Networking {
 
         doRequest(reqURL,response -> {},error -> {});
     }
+    public static void GameOver(int gameID){
+        String reqURL = baseURL + "test.lua?action=gameOver&ID=" + gameID + "&uuid=" + uuid;
+
+        doRequest(reqURL,response -> {},error -> {});
+    }
 }

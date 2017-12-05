@@ -231,7 +231,13 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     protected static boolean useOnline = false;
     protected static int netID = 0;
-
+    protected static void activateButtonsS(boolean red){
+        drags[0].setActive(red==true);
+        drags[1].setActive(red==false);
+    }
+    protected void activateButtons(boolean red){
+        activateButtonsS(red);
+    }
     private static void onChip_Placed()
     {
         if (eventChipTarget.Red())
@@ -262,8 +268,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Add some stats
 
         if (placedFromInput) {
-            drags[1].setActive(true);
-            drags[0].setActive(false);
+            activateButtonsS(false);
         }
     }
     private static void onBlue_Chip_Placed()
@@ -271,8 +276,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Add some stats
 
         if (placedFromInput) {
-            drags[0].setActive(true);
-            drags[1].setActive(false);
+            activateButtonsS(true);
         }
 
     }
@@ -299,7 +303,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
-        if (!useOnline || redsTurn == netIsRed) {
+        if (!useOnline || (redsTurn == netIsRed && netGameState!=0)) {
             for (int i = 0; i < drags.length; ++i) {
                 if (drags[i].isInside((int) tmpX, (int) tmpY)) {
                     dragged = drags[i];
@@ -498,8 +502,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         netID = 0;
         netGameState = -1;
         netMoveCount = 0;
-        drags[0].setActive(true);
-        drags[1].setActive(false);
+        activateButtons(true);
         mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
 
     }
@@ -698,7 +701,15 @@ public class Connect4View extends SurfaceView implements Runnable {
                         online_GetTurns();
                         timeNow = newTime;
                     }
-                break;
+                    break;
+                case 3:
+                    //Game over
+                    online_GameOver();
+                    netGameState = -1;
+                    break;
+            }
+        }
+
         if (alertTimer > 0){
             alertTimer--;
             if (alertTimer <= 0 ) {
@@ -912,6 +923,10 @@ public class Connect4View extends SurfaceView implements Runnable {
         {
             EventSystem.triggerEvent("Tie_Game");
         }
+        if (gameOver && useOnline && netGameState >=0)
+        {
+            netGameState = 3;
+        }
     }
     static boolean winCheck(MapGrid<Chip>.Node check)
     {
@@ -1042,12 +1057,30 @@ public class Connect4View extends SurfaceView implements Runnable {
     public void online_Connect(){
         Networking.Connect(getGameID(), response -> {
             try {
+                //The game ID we are joining
                 netID = response.getInt("ID");
+                //What team are we
                 netIsRed = response.getBoolean("isRed");
-                //Move to waiting state
-                netGameState = 0;
-                if (netIsRed) {
-                    newAlert("Connected! Waiting...");
+
+                //Are we resuming a game?
+                boolean resuming = response.getBoolean("resume");
+                if (resuming)
+                {
+                    netMoveCount = 0;
+                    online_GetTurnsFast();
+                    //Who's turn is it now
+                    redsTurn = response.getBoolean("isRedTurn");
+                    activateButtons(redsTurn);
+                    //Go to that state
+                    netGameState = (netIsRed==redsTurn?1:2);
+                    newAlert("Resuming game...");
+                }
+                else {
+                    //Move to waiting state
+                    netGameState = 0;
+                    if (netIsRed) {
+                        newAlert("Connected! Waiting...");
+                    }
                 }
             } catch (JSONException e) {
                 newAlert("JSON error while connecting");
@@ -1075,7 +1108,38 @@ public class Connect4View extends SurfaceView implements Runnable {
             netID = 0;
         });
     }
+    public void online_GetTurnsFast(){
+        Networking.GetTurns(netID, response -> {
+            try {
+                JSONArray moves = response.getJSONArray("moves");
+                for (int i = netMoveCount; i < moves.length(); i++)
+                {
+                    JSONObject move = moves.getJSONObject(i);
+                    int event = move.getInt("Event");
+                    //Some events for now, 1=placeChip
+                    int data = move.getInt("Data");
+                    //Some data for now, location of placement
+                    int type = move.getInt("Type");
+                    //Some data for now, type of placement
+                    if (event==1) {
+                        addChipFast(getTeamofChip(type), data, getImageofChip(type), type);
+                    }
+                    netMoveCount++;
+                }
+                //Cancel the alert
+                alertTimer = 10;
+            } catch (JSONException e) {
 
+                newAlert("JSON error reading moves");
+            }
+            checkAllWins();
+            doInvalidate = true;
+        }, error -> {
+            newAlert("This game is over, " + error.getMessage());
+            netGameState = -1;
+            netID = 0;
+        });
+    }
     public void online_GetTurns(){
         Networking.GetTurns(netID, response -> {
             try {
@@ -1114,5 +1178,9 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     public static void online_KeepAlive(){
         Networking.KeepAlive(netID);
+    }
+
+    public static void online_GameOver(){
+        Networking.GameOver(netID);
     }
 }
