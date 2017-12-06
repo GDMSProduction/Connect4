@@ -67,8 +67,8 @@ public class Networking {
 
         doRequest(reqURL,listener,errorListener);
     }
-    public static void SendEvent(int gameID, int _event, int _data, int _type, Response.Listener<JSONObject> listener){
-        String reqURL = baseURL + "test.lua?action=move&ID=" + gameID + "&Event=" + _event + "&Data=" + _data + "&Type=" + _type;
+    public static void SendEvent(int gameID, int _event, int _data, int _type, int counter, Response.Listener<JSONObject> listener){
+        String reqURL = baseURL + "test.lua?action=move&ID=" + gameID + "&Event=" + _event + "&Data=" + _data + "&Type=" + _type + "&count=" + counter;
 
         doRequest(reqURL,listener,error -> {});
     }

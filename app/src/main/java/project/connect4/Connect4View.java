@@ -750,18 +750,20 @@ public class Connect4View extends SurfaceView implements Runnable {
         {
             //Go through every height
             MapGrid<Chip>.Node check = width;
-            while (check.up != null && check.data == null)
+            while (check.up != null)
             {
-                //Is something over us
-                MapGrid<Chip>.Node over = check.up;
-                while (over != null) {
-                    if (over.data != null) {
-                        //Move it here
-                        check.data = over.data;
-                        over.data = null;
-                        break;
+                if (check.data == null){
+                    //Is something over us
+                    MapGrid<Chip>.Node over = check.up;
+                    while (over != null) {
+                        if (over.data != null) {
+                            //Move it here
+                            check.data = over.data;
+                            over.data = null;
+                            break;
+                        }
+                       over = over.up;
                     }
-                    over = over.up;
                 }
                 check = check.up;
             }
@@ -1190,7 +1192,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     public static void online_SendEvent(int _event, int _data, int _type){
         //Don't read our own events
         netMoveCount++;
-        Networking.SendEvent(netID,_event,_data,_type, response -> {
+        Networking.SendEvent(netID,_event,_data,_type, netMoveCount, response -> {
         });
     }
     public static void online_KeepAlive(){

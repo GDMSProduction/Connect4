@@ -30,6 +30,7 @@ public class MapGrid<T> {
         int x;
         int y;
     }
+    private Bitmap backgroundV;
     protected Bitmap background;
     private RectF destBack;
     private RectF destAdj;
@@ -85,7 +86,7 @@ public class MapGrid<T> {
             gridSizeY = ((destBack.bottom - destAdj.bottom) - (destBack.top + destAdj.top))/(this.y);
 
             prevHeight = height;
-            background = Bitmap.createScaledBitmap(background,(int)(align),y,false);
+            backgroundV = Bitmap.createScaledBitmap(background,(int)(align),y,false);
         }
     }
     //Starts the draw on the mapGrid
@@ -98,7 +99,7 @@ public class MapGrid<T> {
         DrawMap(test);
 
         //c.drawBitmap(background,null,destBack, null);
-        c.drawBitmap(background,destBack.left,0,null);
+        c.drawBitmap(backgroundV,destBack.left,0,null);
     }
 
     public Coord getCoordOfLoc(int _x, int _y){

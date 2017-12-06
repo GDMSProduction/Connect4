@@ -234,6 +234,10 @@ public class Strategic4View extends Connect4View implements Runnable {
     {
         super(context,false);
         builder1 = new AlertDialog.Builder(context);
+
+        if (team_Drags == null)
+            setup = false;
+
         //The first time this is made, setup statics
         if (!setup)
         {
