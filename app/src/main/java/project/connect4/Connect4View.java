@@ -820,6 +820,14 @@ public class Connect4View extends SurfaceView implements Runnable {
             //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
             canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
         }
+        //Display who we are online
+        if (useOnline){
+            if (netIsRed)
+                canvas.drawText("YOU",5,getHeight()-60,fontPaint);
+            else
+                canvas.drawText("YOU",getWidth() - 215,getHeight()-60,fontPaint);
+        }
+
         for (int i =0;i < drags.length; ++i)
         {
             drags[i].Draw(canvas);
