@@ -118,7 +118,7 @@ public class Strategic4View extends Connect4View implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
-        if (!useOnline || (redsTurn == netIsRed && netGameState!=0)) {
+        if ((!useOnline || (redsTurn == netIsRed && netGameState > 0)) && !isFalling) {
             for (int i = 0; i < team_Drags.length; ++i) {
                 for (int j = 0; j < team_Drags[i].length; ++j) {
                     if (team_Drags[i][j].isInside((int) tmpX, (int) tmpY)) {
@@ -162,7 +162,6 @@ public class Strategic4View extends Connect4View implements Runnable {
             dragged.resetPosition();
             if (tmp.x >= 0 && tmp.x < 7)
             {
-
                 if (addChip(dragged.Red(),tmp.x,dragged.im,dragged.getType())) {
                     placedFromInput = true;
                     dragged.setActive(false);
@@ -357,12 +356,9 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         //canvas.drawBitmap(chipYellow,tmpX-75,tmpY-75,null);
         if (redsTurn) {
-            //canvas.drawBitmap(chipRed, 25, 25, null);
             canvas.drawText("RED Turn",5,getHeight()-25,fontPaint);
-
         }
         else {
-            //canvas.drawBitmap(chipBlue, getWidth() - 175, 25, null);
             canvas.drawText("BLUE Turn",getWidth() - 215,getHeight()-25,fontPaint);
         }
 

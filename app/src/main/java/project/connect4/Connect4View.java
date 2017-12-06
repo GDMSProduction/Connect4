@@ -303,7 +303,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
-        if (!useOnline || (redsTurn == netIsRed && netGameState!=0)) {
+        if (!useOnline || (redsTurn == netIsRed && netGameState > 0)) {
             for (int i = 0; i < drags.length; ++i) {
                 if (drags[i].isInside((int) tmpX, (int) tmpY)) {
                     dragged = drags[i];
@@ -370,8 +370,11 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (mainAlert != null && mainAlert.isShowing())
             mainAlert.cancel();
 
-        mainAlert = builder1.create();
-        mainAlert.show();
+
+        if (playing) {
+            mainAlert = builder1.create();
+            mainAlert.show();
+        }
     }
 
     @Override
@@ -1093,6 +1096,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             } catch (JSONException e) {
                 newAlert("JSON error while connecting");
             }
+            doInvalidate = true;
         },error -> newAlert("Connection failed, " + error.getMessage()));
     }
     public void online_Waiting(){
@@ -1118,6 +1122,13 @@ public class Connect4View extends SurfaceView implements Runnable {
     }
     public void online_GetTurnsFast(){
         Networking.GetTurns(netID, response -> {
+            //Cancel the alert
+            alertTimer = 10;
+
+            //Only fastforwrd from a new board
+            if (netMoveCount != 0)
+                return;
+
             try {
                 JSONArray moves = response.getJSONArray("moves");
                 for (int i = netMoveCount; i < moves.length(); i++)
@@ -1134,8 +1145,6 @@ public class Connect4View extends SurfaceView implements Runnable {
                     }
                     netMoveCount++;
                 }
-                //Cancel the alert
-                alertTimer = 10;
             } catch (JSONException e) {
 
                 newAlert("JSON error reading moves");
