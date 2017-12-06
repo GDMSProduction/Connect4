@@ -8,15 +8,16 @@
     tools:context="project.connect4.MainMenu">
 
     <Button
-        android:id="@+id/btn_start_strat4"
+        android:id="@+id/btn_start_conn4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Strat4"
+        android:text="Connect4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.826"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.39" />
 
     <TextView
         android:layout_width="wrap_content"
@@ -32,30 +33,16 @@
         app:layout_constraintVertical_bias="0.115" />
 
     <Button
-        android:id="@+id/btn_start_con4"
+        android:id="@+id/btn_start_con4_online"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start Con4"
+        android:text="Connect4"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.189"
+        app:layout_constraintHorizontal_bias="0.18"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <Switch
-        android:id="@+id/swch_Online"
-        android:layout_width="144dp"
-        android:layout_height="49dp"
-        android:layout_marginBottom="48dp"
-        android:layout_marginEnd="8dp"
-        android:layout_marginStart="8dp"
-        android:background="@android:drawable/toast_frame"
-        android:backgroundTint="#99FFFFFF"
-        android:text="Online"
-        android:textAllCaps="false"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.391" />
 
     <Button
         android:id="@+id/btn_Help"
@@ -66,19 +53,70 @@
         android:layout_marginStart="8dp"
         android:text="Help"
         app:layout_constraintBottom_toTopOf="@+id/btn_Options"
-        app:layout_constraintEnd_toEndOf="@+id/swch_Online"
-        app:layout_constraintStart_toStartOf="@+id/swch_Online" />
+        app:layout_constraintEnd_toEndOf="@+id/btn_Options"
+        app:layout_constraintStart_toStartOf="@+id/btn_Options" />
 
     <Button
         android:id="@+id/btn_Options"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:enabled="false"
+        android:text="Options"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+
+    <TextView
+        android:id="@+id/textView4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         android:layout_marginBottom="8dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
-        android:text="Options"
-        app:layout_constraintBottom_toTopOf="@+id/swch_Online"
-        app:layout_constraintEnd_toEndOf="@+id/swch_Online"
-        app:layout_constraintStart_toStartOf="@+id/swch_Online" />
+        android:text="Online"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_start_con4_online"
+        app:layout_constraintEnd_toEndOf="@+id/btn_start_con4_online"
+        app:layout_constraintStart_toStartOf="@+id/btn_start_con4_online" />
+
+    <TextView
+        android:id="@+id/textView5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:text="Local"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toTopOf="@+id/btn_start_conn4"
+        app:layout_constraintEnd_toEndOf="@+id/btn_start_conn4"
+        app:layout_constraintStart_toStartOf="@+id/btn_start_conn4" />
+
+    <Button
+        android:id="@+id/btn_start_strat4_online"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Strategic4"
+        app:layout_constraintEnd_toEndOf="@+id/btn_start_con4_online"
+        app:layout_constraintStart_toStartOf="@+id/btn_start_con4_online"
+        app:layout_constraintTop_toBottomOf="@+id/btn_start_con4_online" />
+
+    <Button
+        android:id="@+id/btn_start_strat4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginTop="8dp"
+        android:text="Strategic4"
+        app:layout_constraintEnd_toEndOf="@+id/btn_start_conn4"
+        app:layout_constraintStart_toStartOf="@+id/btn_start_conn4"
+        app:layout_constraintTop_toBottomOf="@+id/btn_start_conn4" />
 
 </android.support.constraint.ConstraintLayout>
