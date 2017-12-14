@@ -1,4 +1,4 @@
-package project.connect4;
+package us.starcatcher.strategic4;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -7,10 +7,10 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.graphics.RadialGradient;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
-
-import com.android.volley.toolbox.Volley;
 
 import java.util.ArrayList;
 
@@ -251,7 +251,7 @@ public class Strategic4View extends Connect4View implements Runnable {
         setup = true;
 
         //The click sound
-        mp = MediaPlayer.create(context,R.raw.chip_click);
+        mp = MediaPlayer.create(context, R.raw.chip_click);
         //The click sound
         bomb_explode_sound = MediaPlayer.create(context,R.raw.bombexplosion);
 
@@ -338,17 +338,15 @@ public class Strategic4View extends Connect4View implements Runnable {
             team_Drags[1][j].setActive(false);
             team_Drags[1][j].coolDown = 0;
         }
-        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
+        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,13,10,9));
     }
     @Override
     protected void update() {
         super.update();
         doInvalidate = true;
     }
-    protected void drawGame(Canvas canvas) {
 
-        //drawing a background color for canvas
-        canvas.drawColor(Color.argb(255,25,180,25));
+    protected void drawGame(Canvas canvas) {
 
         hoverChip.Draw(canvas,alphaPaint);
 
@@ -368,10 +366,16 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         //Display who we are online
         if (useOnline){
-            if (netIsRed)
-                canvas.drawText("YOU",5,getHeight()-60,fontPaint);
-            else
-                canvas.drawText("YOU",getWidth() - 215,getHeight()-60,fontPaint);
+            if (netIsRed) {
+                canvas.drawText("YOU", 5, getHeight() - 75, YOUPaint);
+                if (netGameState != 0)
+                    canvas.drawText("Them", getWidth() - 215, getHeight() - 75, TheirPaint);
+            }
+            else {
+                if (netGameState != 0)
+                    canvas.drawText("Them", 5, getHeight() - 75, TheirPaint);
+                canvas.drawText("YOU", getWidth() - 215, getHeight() - 75, YOUPaint);
+            }
         }
 
         for (int i = 0; i < team_Drags.length; ++i)
@@ -459,7 +463,7 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         for (int i = 1; i <= 24; i++) {
             bAnims[i-1] = Bitmap.createScaledBitmap( BitmapFactory.decodeResource(getResources(),getResources().getIdentifier(
-                    "banim"+i, "drawable","project.connect4")),chipSize,chipSize, false);
+                    "banim"+i, "drawable","us.starcatcher.strategic4")),chipSize,chipSize, false);
         }
 
     }

@@ -1,4 +1,4 @@
-package project.connect4;
+package us.starcatcher.strategic4;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;

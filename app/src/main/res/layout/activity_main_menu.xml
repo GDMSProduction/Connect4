@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/background_cut"
-    tools:context="project.connect4.MainMenu">
+    tools:context="project.connect4.us.starcatcher.strategic4.MainMenu">
 
     <Button
         android:id="@+id/btn_start_conn4"

@@ -1,4 +1,4 @@
-package project.connect4;
+package us.starcatcher.strategic4;
 
 import android.graphics.Bitmap;
 import android.graphics.Canvas;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="project.connect4">
+    package="us.starcatcher.strategic4">
 
     <uses-permission android:name="android.permission.INTERNET" />
 
@@ -15,24 +15,25 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name=".MainMenu">
+        <activity android:name="us.starcatcher.strategic4.MainMenu"
+                android:theme="@style/generalnotitle">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name=".Connect4Game"
+            android:name="us.starcatcher.strategic4.Connect4Game"
             android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/generalnotitle" />
         <activity
-            android:name=".Strategic4Game"
+            android:name="us.starcatcher.strategic4.Strategic4Game"
             android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/generalnotitle" />
-        <activity android:name=".HelpMenu"></activity>
+        <activity android:name="us.starcatcher.strategic4.HelpMenu"
+            android:theme="@style/generalnotitle" />
     </application>
 
 </manifest>

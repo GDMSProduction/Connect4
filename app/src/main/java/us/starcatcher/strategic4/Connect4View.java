@@ -1,4 +1,4 @@
-package project.connect4;
+package us.starcatcher.strategic4;
 
 import android.app.AlertDialog;
 import android.content.Context;
@@ -8,6 +8,7 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
+import android.graphics.drawable.GradientDrawable;
 import android.media.MediaPlayer;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
@@ -182,6 +183,8 @@ public class Connect4View extends SurfaceView implements Runnable {
             "Red_Chip_Placed", "Blue_Wins", "Red_Wins", "Tie_Game", "Touch_Down", "Touch_Move", "Touch_Up"};
 
     protected Paint fontPaint;
+    protected Paint YOUPaint;
+    protected Paint TheirPaint;
     protected Paint alphaPaint;
     protected static Paint gameOverPaint;
     protected static Canvas theCanvas;
@@ -359,6 +362,20 @@ public class Connect4View extends SurfaceView implements Runnable {
             hoverChip.active = false;
         }
     }
+
+    public void setPlayer(boolean isRed){
+        int red = Color.rgb(255,50,50);
+        int blue = Color.rgb(50,50,255);
+        if (isRed) {
+            YOUPaint.setColor(red);
+            TheirPaint.setColor(blue);
+        }
+        else {
+            YOUPaint.setColor(blue);
+            TheirPaint.setColor(red);
+        }
+    }
+
     AlertDialog.Builder builder1;
     AlertDialog mainAlert;
     long alertTimer = 0;
@@ -391,12 +408,25 @@ public class Connect4View extends SurfaceView implements Runnable {
         surfaceHolder = getHolder();
         fontPaint = new Paint();
         fontPaint.setTextSize(45f);
+
+        YOUPaint = new Paint();
+        YOUPaint.setTextSize(65f);
+        TheirPaint = new Paint();
+        TheirPaint.setTextSize(65f);
+
+        //Set the correct font colors
+        setPlayer(true);
+
         alphaPaint = new Paint();
         alphaPaint.setAlpha(127);
         builder1 = new AlertDialog.Builder(context);
         this.setWillNotDraw(false);
 
         hoverChip = new HoverChip(null,0,0);
+
+        if (drags == null)
+            setup = false;
+
         //The first time this is made, setup statics
         if (!setup && doSetup)
         {
@@ -424,13 +454,21 @@ public class Connect4View extends SurfaceView implements Runnable {
             drags[0].im = chipRed;
             drags[1].im = chipBlue;
         }
+
+        int colors[] = { 0xff25b425 , 0xff15a415, 0xff000000 };
+
+        GradientDrawable g = new GradientDrawable(GradientDrawable.Orientation.BOTTOM_TOP, colors);
+        g.setGradientType(GradientDrawable.RADIAL_GRADIENT);
+        g.setGradientRadius(getWidth()*0.8f);
+
+        setBackgroundDrawable(g);
     }
     private void setupOnce(Context context)
     {
         setup = true;
 
         //The click sound
-        mp = MediaPlayer.create(context,R.raw.chip_click);
+        mp = MediaPlayer.create(context, R.raw.chip_click);
 
         //Image loading options
         BitmapFactory.Options options = new BitmapFactory.Options();
@@ -506,7 +544,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         netGameState = -1;
         netMoveCount = 0;
         activateButtons(true);
-        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(7,7,5,5));
+        mapGrid = new MapGrid<Chip>(7,6, background, new Rect(14,13,10,9));
 
     }
 
@@ -803,10 +841,6 @@ public class Connect4View extends SurfaceView implements Runnable {
 
     protected void drawGame(Canvas canvas) {
 
-        //drawing a background color for canvas
-        canvas.drawColor(Color.argb(255,25,180,25));
-        //canvas.drawBitmap(gameField,null,viewSize, null);
-
         hoverChip.Draw(canvas,alphaPaint);
 
         mapGrid.Draw(canvas, this, chipDraw);
@@ -827,10 +861,16 @@ public class Connect4View extends SurfaceView implements Runnable {
         }
         //Display who we are online
         if (useOnline){
-            if (netIsRed)
-                canvas.drawText("YOU",5,getHeight()-60,fontPaint);
-            else
-                canvas.drawText("YOU",getWidth() - 215,getHeight()-60,fontPaint);
+            if (netIsRed) {
+                canvas.drawText("YOU", 5, getHeight() - 75, YOUPaint);
+                if (netGameState != 0)
+                    canvas.drawText("Them", getWidth() - 215, getHeight() - 75, TheirPaint);
+            }
+            else {
+                if (netGameState != 0)
+                    canvas.drawText("Them", 5, getHeight() - 75, TheirPaint);
+                canvas.drawText("YOU", getWidth() - 215, getHeight() - 75, YOUPaint);
+            }
         }
 
         for (int i =0;i < drags.length; ++i)
@@ -1092,9 +1132,12 @@ public class Connect4View extends SurfaceView implements Runnable {
                     //Move to waiting state
                     netGameState = 0;
                     if (netIsRed) {
-                        newAlert("Connected! Waiting...");
+                        newAlert("Connected! Waiting for a player...");
                     }
                 }
+
+                setPlayer(netIsRed);
+
             } catch (JSONException e) {
                 newAlert("JSON error while connecting");
             }
@@ -1118,6 +1161,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             }
         },error -> {
             newAlert("This game is over, " + error.getMessage());
+            gameOver = true;
             netGameState = -1;
             netID = 0;
         });
@@ -1155,6 +1199,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             doInvalidate = true;
         }, error -> {
             newAlert("This game is over, " + error.getMessage());
+            gameOver = true;
             netGameState = -1;
             netID = 0;
         });
@@ -1185,6 +1230,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             }
         }, error -> {
             newAlert("This game is over, " + error.getMessage());
+            gameOver = true;
             netGameState = -1;
             netID = 0;
         });
