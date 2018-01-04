@@ -74,6 +74,8 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         //Change turns after a chip was played
         if (placedFromInput) {
+
+            //TODO: This should not assume the chip played was the correct color, what if we receive our own move from another client?
             int team = redsTurn?1:0;
             for (int i = 0; i < team_Drags[team].length; ++i) {
                 team_Drags[team][i].tick();
@@ -94,24 +96,14 @@ public class Strategic4View extends Connect4View implements Runnable {
 
         //Add some stats
         if (placedFromInput) {
-            for (int j = 0; j < team_Drags[1].length; ++j) {
-                team_Drags[1][j].setActive(true);
-            }
-            for (int j = 0; j < team_Drags[0].length; ++j) {
-                team_Drags[0][j].setActive(false);
-            }
+            activateButtonsS(false);
         }
     }
     private static void onBlue_Chip_Placed()
     {
         //Add some stats
         if (placedFromInput) {
-            for (int j = 0; j < team_Drags[0].length; ++j) {
-                team_Drags[0][j].setActive(true);
-            }
-            for (int j = 0; j < team_Drags[1].length; ++j) {
-                team_Drags[1][j].setActive(false);
-            }
+            activateButtonsS(true);
         }
     }
 
@@ -180,6 +172,7 @@ public class Strategic4View extends Connect4View implements Runnable {
     private static int bomb_Cooldown = 2;
     private static void onBomb_Placed()
     {
+        //Set the bomb cools for the user that just played
         if (eventChipTarget.Red())
             team_Drags[0][1].coolDown = bomb_Cooldown;
         else
@@ -343,7 +336,8 @@ public class Strategic4View extends Connect4View implements Runnable {
     @Override
     protected void update() {
         super.update();
-        doInvalidate = true;
+        if (anims.size() > 0)
+            doInvalidate = true;
     }
 
     protected void drawGame(Canvas canvas) {

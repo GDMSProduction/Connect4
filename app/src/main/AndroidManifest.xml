@@ -15,25 +15,31 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="us.starcatcher.strategic4.MainMenu"
-                android:theme="@style/generalnotitle">
+        <activity
+            android:name=".MainMenu"
+            android:theme="@style/generalnotitle">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
+
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
         <activity
-            android:name="us.starcatcher.strategic4.Connect4Game"
+            android:name=".Connect4Game"
             android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/generalnotitle" />
         <activity
-            android:name="us.starcatcher.strategic4.Strategic4Game"
+            android:name=".Strategic4Game"
             android:hardwareAccelerated="true"
             android:screenOrientation="sensorLandscape"
             android:theme="@style/generalnotitle" />
-        <activity android:name="us.starcatcher.strategic4.HelpMenu"
+        <activity
+            android:name=".HelpMenu"
             android:theme="@style/generalnotitle" />
+        <activity
+            android:name=".MyGames"
+            android:theme="@style/generalnotitle"/>
     </application>
 
 </manifest>

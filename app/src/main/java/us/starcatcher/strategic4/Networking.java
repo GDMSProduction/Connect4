@@ -65,21 +65,47 @@ public class Networking {
     public static void GetTurns(int gameID, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
         String reqURL = baseURL + "test.lua?action=get&ID=" + gameID;
 
+        //TODO Check for slow games, add &slow=true
+
         doRequest(reqURL,listener,errorListener);
     }
     public static void SendEvent(int gameID, int _event, int _data, int _type, int counter, Response.Listener<JSONObject> listener){
         String reqURL = baseURL + "test.lua?action=move&ID=" + gameID + "&Event=" + _event + "&Data=" + _data + "&Type=" + _type + "&count=" + counter;
 
+        //TODO Check for slow games, add &slow=true
+
         doRequest(reqURL,listener,error -> {});
+    }
+    public static void GameOver(int gameID){
+        String reqURL = baseURL + "test.lua?action=gameOver&ID=" + gameID + "&uuid=" + uuid;
+
+        //TODO Check for slow games, add &slow=true
+
+        doRequest(reqURL,response -> {},error -> {});
     }
     public static void KeepAlive(int gameID){
         String reqURL = baseURL + "test.lua?action=keepAlive&ID=" + gameID;
 
         doRequest(reqURL,response -> {},error -> {});
     }
-    public static void GameOver(int gameID){
-        String reqURL = baseURL + "test.lua?action=gameOver&ID=" + gameID + "&uuid=" + uuid;
+    public static void GetMyGames(Response.Listener<JSONObject> listener){
+        String reqURL = baseURL + "test.lua?action=mygames&uuid=" + uuid;
 
-        doRequest(reqURL,response -> {},error -> {});
+        doRequest(reqURL,listener,error -> {});
+    }
+    public static void FindGames(Response.Listener<JSONObject> listener){
+        String reqURL = baseURL + "test.lua?action=findgame&uuid=" + uuid;
+
+        doRequest(reqURL,listener,error -> {});
+    }
+    public static void JoinGame(int gameID, Response.Listener<JSONObject> listener){
+        String reqURL = baseURL + "test.lua?action=joingame&uuid=" + uuid + "&ID=" + gameID;
+
+        doRequest(reqURL,listener,error -> {});
+    }
+    public static void CreateGame(boolean useBomb, int bombCD, boolean useWood, Response.Listener<JSONObject> listener){
+        String reqURL = baseURL + "test.lua?action=creategame&uuid=" + uuid + "&useBomb=" + useBomb + "&bombCD=" + bombCD + "&useWood=" + useWood;
+
+        doRequest(reqURL,listener,error -> {});
     }
 }

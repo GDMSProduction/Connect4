@@ -52,6 +52,11 @@ public class MainMenu extends AppCompatActivity {
             startActivity(new Intent(this, HelpMenu.class));
         });
 
+        //Help button
+        findViewById(R.id.btn_Options).setOnClickListener(v -> {
+            startActivity(new Intent(this, MyGames.class));
+        });
+
         //Start networking
         Networking.init(this);
     }

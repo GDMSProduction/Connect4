@@ -251,10 +251,9 @@ public class Connect4View extends SurfaceView implements Runnable {
         //Play a sound effect
         mp.start();
 
-
-
         //Change turns after a chip was played
         if (placedFromInput) {
+            //TODO: This should not assume the chip played was the correct color, what if we receive our own move from another client?
             redsTurn = !redsTurn;
             if (useOnline)
                 netGameState = (netIsRed==redsTurn?1:2);
@@ -306,6 +305,7 @@ public class Connect4View extends SurfaceView implements Runnable {
     //Touch events, use tmpx and tmpy for locations
     private static void onTouch_Down()
     {
+        //There is no falling check because there are no other active chips currently
         if (!useOnline || (redsTurn == netIsRed && netGameState > 0)) {
             for (int i = 0; i < drags.length; ++i) {
                 if (drags[i].isInside((int) tmpX, (int) tmpY)) {
@@ -809,29 +809,6 @@ public class Connect4View extends SurfaceView implements Runnable {
         }
     }
 
-    //Go through a list of all moves and play them
-    public void fastForward(JSONArray moves){
-        try{
-            for (int i = 0; i < moves.length(); i++) {
-                JSONObject move = moves.getJSONObject(i);
-                int event = move.getInt("Event");
-                //Some events for now, 1=placeChip
-                int data = move.getInt("Data");
-                //Some data for now, location of placement
-                int type = move.getInt("Type");
-                //Some data for now, type of placement
-                if (event == 1) {
-                    addChipFast(getTeamofChip(type), data, getImageofChip(type), type);
-                    fallDownFast();
-                }
-            }
-        } catch (JSONException e) {
-            newAlert("JSON error while connecting");
-        }
-        checkAllWins();
-        doInvalidate = true;
-    }
-
     public static void DrawChip(Chip c, int x, int y)
     {
         c.Draw(x,y,theCanvas);
@@ -1155,6 +1132,7 @@ public class Connect4View extends SurfaceView implements Runnable {
                         netGameState = 2;
                     newAlert("Ready, you are " + (netIsRed?"First":"Second"));
                     alertTimer = 80;
+                    doInvalidate = true;
                 }
             } catch (JSONException e) {
                 newAlert("JSON error reading moves");
