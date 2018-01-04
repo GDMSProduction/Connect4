@@ -8,6 +8,18 @@
     tools:context="project.connect4.us.starcatcher.strategic4.MainMenu">
 
     <Button
+        android:id="@+id/btn_MyGames"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="8dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="24dp"
+        android:text="My Games"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView11" />
+
+    <Button
         android:id="@+id/btn_start_conn4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -20,6 +32,7 @@
         app:layout_constraintVertical_bias="0.39" />
 
     <TextView
+        android:id="@+id/textView11"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Strategic4"
@@ -63,6 +76,7 @@
         android:layout_marginBottom="24dp"
         android:layout_marginEnd="8dp"
         android:layout_marginStart="8dp"
+        android:enabled="false"
         android:text="Options"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

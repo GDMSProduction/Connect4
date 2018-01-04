@@ -53,7 +53,7 @@ public class MainMenu extends AppCompatActivity {
         });
 
         //Help button
-        findViewById(R.id.btn_Options).setOnClickListener(v -> {
+        findViewById(R.id.btn_MyGames).setOnClickListener(v -> {
             startActivity(new Intent(this, MyGames.class));
         });
 

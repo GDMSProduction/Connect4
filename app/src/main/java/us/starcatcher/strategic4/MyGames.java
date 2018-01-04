@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 public class MyGames extends AppCompatActivity {
 
@@ -36,37 +37,23 @@ public class MyGames extends AppCompatActivity {
                 for (int i = 0; i < games.length(); i++) {
                     //Get data from the game and make a button layout
 
+                    JSONObject game = games.getJSONObject(i);
                     ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.mygame_list_item, scrolly, false);
+                    //Text object, username
+                    ((TextView)layout.getChildAt(0)).setText(game.getString("OtherName") );
                     //The text object
-                    ((TextView)layout.getChildAt(0)).setText("Game #" + i);
-
+                    boolean turn = game.getBoolean("isRedTurn");
+                    ((TextView)layout.getChildAt(1)).setText(turn ? "Your Turn" : "Waiting" );
                     //The Button object
-                    ((Button)layout.getChildAt(2)).setText("Button G" + i);
-
-                    //Put the data into a final button event
+                    ((Button)layout.getChildAt(2)).setText("View #" + game.getInt("ID"));
                     final int id = i;
                     ((Button)layout.getChildAt(2)).setOnClickListener(v -> {
                         pressButton(id);
                     });
-
                     scrolly.addView(layout, 0);
                 }
             } catch (JSONException e) {
             }
         });
-
-        //Create fake buttons for a test
-        for (int i = 0; i < 15 ; i ++) {
-            ConstraintLayout layout = (ConstraintLayout) inflater.inflate(R.layout.mygame_list_item, scrolly, false);
-            //The text object
-            ((TextView)layout.getChildAt(0)).setText("Object #" + i);
-            //The Button object
-            ((Button)layout.getChildAt(2)).setText("Button #" + i);
-            final int id = i;
-            ((Button)layout.getChildAt(2)).setOnClickListener(v -> {
-                pressButton(id);
-            });
-            scrolly.addView(layout, 0);
-        }
     }
 }
