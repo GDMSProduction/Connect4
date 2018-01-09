@@ -33,6 +33,9 @@ public class Strategic4View extends Connect4View implements Runnable {
     //First index is TEAM, second index is chip options
     protected static DragChip[][] team_Drags;
 
+    protected static boolean useBombs = true;
+    protected static boolean useWood = true;
+
     protected static void activateButtonsS(boolean red){
         for (int j = 0; j < team_Drags[0].length; ++j) {
             team_Drags[0][j].setActive(red==true);
@@ -169,7 +172,7 @@ public class Strategic4View extends Connect4View implements Runnable {
             hoverChip.active = false;
         }
     }
-    private static int bomb_Cooldown = 2;
+    protected static int bomb_Cooldown = 2;
     private static void onBomb_Placed()
     {
         //Set the bomb cools for the user that just played
@@ -270,7 +273,14 @@ public class Strategic4View extends Connect4View implements Runnable {
         DragChip blue_bomb_drag = new DragChip(chipBomb,false, 5,25,200,150,150);
         DragChip blue_wood_drag = new DragChip(chipWood,false, 7,25,375,150,150);
 
-        team_Drags = new DragChip[][] {{red_drag,red_bomb_drag,red_wood_drag}, {blue_drag,blue_bomb_drag,blue_wood_drag}};
+        if (useBombs && useWood)
+            team_Drags = new DragChip[][] {{red_drag,red_bomb_drag,red_wood_drag}, {blue_drag,blue_bomb_drag,blue_wood_drag}};
+        if (!useBombs && useWood)
+            team_Drags = new DragChip[][] {{red_drag,red_wood_drag}, {blue_drag,blue_wood_drag}};
+        if (useBombs && !useWood)
+            team_Drags = new DragChip[][] {{red_drag,red_bomb_drag}, {blue_drag,blue_bomb_drag}};
+        if (!useBombs && !useWood)
+            team_Drags = new DragChip[][] {{red_drag}, {blue_drag}};
         blue_drag.setActive(false);
 
         setupEvents();
@@ -447,6 +457,7 @@ public class Strategic4View extends Connect4View implements Runnable {
         //Resize anything that may have needed it
         for (int j = 0; j < team_Drags[0].length; ++j)
         {
+            team_Drags[0][j].setPosition(25,25 + j*175);
             team_Drags[0][j].im = getImageofChip(team_Drags[0][j].getType());
         }
         for (int j = 0; j < team_Drags[1].length; ++j)

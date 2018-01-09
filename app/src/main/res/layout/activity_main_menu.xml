@@ -20,10 +20,10 @@
         app:layout_constraintTop_toBottomOf="@+id/textView11" />
 
     <Button
-        android:id="@+id/btn_start_conn4"
+        android:id="@+id/btn_Setup_Local"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Connect4"
+        android:text="Setup"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.826"
@@ -106,9 +106,9 @@
         android:text="Local"
         android:textColor="@android:color/white"
         android:textSize="16sp"
-        app:layout_constraintBottom_toTopOf="@+id/btn_start_conn4"
-        app:layout_constraintEnd_toEndOf="@+id/btn_start_conn4"
-        app:layout_constraintStart_toStartOf="@+id/btn_start_conn4" />
+        app:layout_constraintBottom_toTopOf="@+id/btn_Setup_Local"
+        app:layout_constraintEnd_toEndOf="@+id/btn_Setup_Local"
+        app:layout_constraintStart_toStartOf="@+id/btn_Setup_Local" />
 
     <Button
         android:id="@+id/btn_start_strat4_online"
@@ -122,14 +122,14 @@
         app:layout_constraintTop_toBottomOf="@+id/btn_start_con4_online" />
 
     <Button
-        android:id="@+id/btn_start_strat4"
+        android:id="@+id/btn_Resume"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="8dp"
         android:layout_marginTop="8dp"
-        android:text="Strategic4"
-        app:layout_constraintEnd_toEndOf="@+id/btn_start_conn4"
-        app:layout_constraintStart_toStartOf="@+id/btn_start_conn4"
-        app:layout_constraintTop_toBottomOf="@+id/btn_start_conn4" />
+        android:enabled="false"
+        android:text="Resume"
+        app:layout_constraintEnd_toEndOf="@+id/btn_Setup_Local"
+        app:layout_constraintStart_toStartOf="@+id/btn_Setup_Local"
+        app:layout_constraintTop_toBottomOf="@+id/btn_Setup_Local" />
 
 </android.support.constraint.ConstraintLayout>

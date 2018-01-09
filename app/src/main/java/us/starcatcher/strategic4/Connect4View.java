@@ -424,7 +424,7 @@ public class Connect4View extends SurfaceView implements Runnable {
 
         hoverChip = new HoverChip(null,0,0);
 
-        if (drags == null)
+        if (drags == null && doSetup)
             setup = false;
 
         //The first time this is made, setup statics

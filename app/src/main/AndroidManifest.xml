@@ -39,7 +39,12 @@
             android:theme="@style/generalnotitle" />
         <activity
             android:name=".MyGames"
-            android:theme="@style/generalnotitle"/>
+            android:theme="@style/generalnotitle" />
+        <activity
+            android:name=".FindGames"
+            android:theme="@style/generalnotitle" />
+        <activity android:name=".MatchSetup"
+            android:theme="@style/generalnotitle" />
     </application>
 
 </manifest>

@@ -10,26 +10,23 @@ import android.widget.Button;
 
 public class MainMenu extends AppCompatActivity {
 
+    private static Button btn_Resume;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
         setContentView(R.layout.activity_main_menu);
 
-        //The local play buttons
-        findViewById(R.id.btn_start_conn4).setOnClickListener(v -> {
-            if (Connect4View.useOnline) {
-                Connect4View.useOnline = false;
-                Connect4View.setup = false;
-            }
-            startConn4(v);
+        //The local play setup
+        findViewById(R.id.btn_Setup_Local).setOnClickListener(v -> {
+            MatchSetup.useOnline = false;
+            startActivity(new Intent(this, MatchSetup.class));
         });
-        findViewById(R.id.btn_start_strat4).setOnClickListener(v -> {
-            if (Connect4View.useOnline) {
-                Connect4View.useOnline = false;
-                Connect4View.setup = false;
-            }
-            startStrat4(v);
+        //The resume local game button
+        btn_Resume = findViewById(R.id.btn_Resume);
+        btn_Resume.setOnClickListener(v -> {
+            startStrat4();
         });
 
         //The online play buttons
