@@ -62,7 +62,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="16dp"
-                    android:text="Start a new game"
+                    android:text="Find a new game"
                     android:textColor="@android:color/white"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintStart_toStartOf="parent"
@@ -70,12 +70,12 @@
                     app:layout_constraintVertical_bias="0.48000002" />
 
                 <Button
-                    android:id="@+id/btn_CreateGame"
+                    android:id="@+id/btn_FindGame"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
                     android:layout_marginEnd="16dp"
                     android:backgroundTint="#FF44BB44"
-                    android:text="Create"
+                    android:text="Find"
                     app:layout_constraintBottom_toBottomOf="parent"
                     app:layout_constraintEnd_toEndOf="parent"
                     app:layout_constraintTop_toTopOf="parent" />

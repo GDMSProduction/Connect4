@@ -5,6 +5,7 @@ import android.media.AudioManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.Button;
 
 
 public class MainMenu extends AppCompatActivity {
@@ -44,7 +45,7 @@ public class MainMenu extends AppCompatActivity {
                 Connect4View.useOnline = true;
                 Connect4View.setup = false;
             }
-            startStrat4(v);
+            startStrat4();
         });
 
         //Help button
@@ -59,6 +60,41 @@ public class MainMenu extends AppCompatActivity {
 
         //Start networking
         Networking.init(this);
+    }
+
+    protected static boolean waitingForGame = false;
+    protected static boolean useBombs = true;
+    protected static boolean useWood = true;
+    protected static int bombCD = 2;
+    protected static int netGameID = -1;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (waitingForGame)
+        {
+            waitingForGame = false;
+            strat4_running = false;
+            Connect4View.setup = false;
+            if (netGameID >= 0)
+                Connect4View.useOnline = true;
+            else
+                Connect4View.useOnline = false;
+
+            //Set rules for the waiting game
+            Strategic4View.bomb_Cooldown = bombCD;
+            Strategic4View.useBombs = useBombs;
+            Strategic4View.useWood = useWood;
+            startStrat4();
+        }
+        if (strat4_running && !Strategic4View.useOnline)
+        {
+            btn_Resume.setEnabled(true);
+        }
+        else
+        {
+            btn_Resume.setEnabled(false);
+        }
     }
 
     @Override
@@ -78,7 +114,7 @@ public class MainMenu extends AppCompatActivity {
         con4_running = true;
         startActivity(new Intent(this, Connect4Game.class));
     }
-    public void startStrat4(View v)
+    public void startStrat4()
     {
         if (con4_running) {
             con4_running = false;

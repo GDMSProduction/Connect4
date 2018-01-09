@@ -1,5 +1,6 @@
 package us.starcatcher.strategic4;
 
+import android.content.Intent;
 import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -24,6 +25,11 @@ public class MyGames extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_my_games);
 
+        findViewById(R.id.btn_FindGame).setOnClickListener(v -> {
+            //Find Game menu here
+            startActivity(new Intent(this, FindGames.class));
+        });
+
         //The layout which is scrolled
         LinearLayout scrolly = (LinearLayout)findViewById(R.id.scroll_Layout);
 
@@ -44,10 +50,12 @@ public class MyGames extends AppCompatActivity {
                     //The text object
                     boolean turn = game.getBoolean("isRedTurn");
                     ((TextView)layout.getChildAt(1)).setText(turn ? "Your Turn" : "Waiting" );
+
+                    final int id = game.getInt("ID");
+
                     //The Button object
-                    ((Button)layout.getChildAt(2)).setText("View #" + game.getInt("ID"));
-                    final int id = i;
-                    ((Button)layout.getChildAt(2)).setOnClickListener(v -> {
+                    ((Button)layout.getChildAt(2)).setText("View #" + id);
+                    layout.getChildAt(2).setOnClickListener(v -> {
                         pressButton(id);
                     });
                     scrolly.addView(layout, 0);

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<android.support.constraint.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background_cut"
+    tools:context="us.starcatcher.strategic4.MatchSetup">
+
+    <TextView
+        android:id="@+id/textView15"
+        android:layout_width="190dp"
+        android:layout_height="38dp"
+        android:background="@android:drawable/toast_frame"
+        android:backgroundTint="#67111111"
+        android:padding="0dp"
+        android:text="Match Setup"
+        android:textAlignment="center"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
+        android:textColor="@android:color/white"
+        android:textSize="28sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.0" />
+
+    <CheckBox
+        android:id="@+id/check_Bombs"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="48dp"
+        android:checked="true"
+        android:text="Use Bombs"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/textView15" />
+
+    <SeekBar
+        android:id="@+id/bar_BombCD"
+        style="@style/Widget.AppCompat.SeekBar.Discrete"
+        android:layout_width="161dp"
+        android:layout_height="25dp"
+        android:layout_marginStart="8dp"
+        android:max="6"
+        android:progress="1"
+        app:layout_constraintBottom_toBottomOf="@+id/text_BombCD"
+        app:layout_constraintStart_toEndOf="@+id/text_BombCD"
+        app:layout_constraintTop_toTopOf="@+id/text_BombCD" />
+
+    <TextView
+        android:id="@+id/text_BombCD"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Bomb Cooldown: 1"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="@+id/check_Bombs"
+        app:layout_constraintTop_toBottomOf="@+id/check_Bombs" />
+
+    <CheckBox
+        android:id="@+id/check_Wood"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginTop="16dp"
+        android:checked="true"
+        android:text="Use Wood"
+        android:textColor="@android:color/white"
+        android:textSize="18sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_BombCD" />
+
+    <Button
+        android:id="@+id/btn_FinishMatchSetup"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="32dp"
+        android:layout_marginTop="32dp"
+        android:backgroundTint="#FF44BB44"
+        android:text="Create"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/check_Wood" />
+
+</android.support.constraint.ConstraintLayout>
