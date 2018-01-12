@@ -32,6 +32,8 @@ class Chip
     private boolean isRed;
     private int type;
     boolean isDoneMoving = false;
+    //TODO Add chip highlighting here?
+
     Chip(Bitmap _im, boolean _isRed, int _type)
     {
         im = _im;
@@ -613,7 +615,7 @@ public class Connect4View extends SurfaceView implements Runnable {
             lag +=  newTime - lastTime;
             lastTime = newTime;
             while (lag > TICK_RATE) {
-                this.post(() -> update());
+                this.post(this::update);
                 lag -= TICK_RATE;
             }
             sleep();
@@ -896,7 +898,7 @@ public class Connect4View extends SurfaceView implements Runnable {
         if (gameOver)
             newGame();
 
-        if (useOnline && netID == 0)
+        if (useOnline && (netID == 0 || Networking.slowGame))
         {
             online_Connect();
         }
@@ -1064,9 +1066,9 @@ public class Connect4View extends SurfaceView implements Runnable {
                 break;
             tmp = tmp.down;
         }
+
         if (count >= 4)
             return true;
-
 
         return false;
     }
@@ -1079,13 +1081,13 @@ public class Connect4View extends SurfaceView implements Runnable {
     {
         return drags[type/4].Red();
     }
-    
+
     //Network gameID, Connect4 = 1
     public int getGameID(){return 1;}
     protected static int netMoveCount = 0;
 
     public void online_Connect(){
-        Networking.Connect(getGameID(), response -> {
+        Networking.Connect( Networking.slowGame ? netID : getGameID(), response -> {
             try {
                 //The game ID we are joining
                 netID = response.getInt("ID");

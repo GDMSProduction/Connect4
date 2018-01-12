@@ -328,7 +328,6 @@ public class Strategic4View extends Connect4View implements Runnable {
         blueWins = false;
         isFalling = false;
         startFalling = false;
-        netID = 0;
         netGameState = -1;
         netMoveCount = 0;
         for (int j = 0; j < team_Drags[1].length; ++j)

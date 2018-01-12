@@ -16,9 +16,11 @@ import org.json.JSONObject;
 
 public class FindGames extends AppCompatActivity {
 
-    public static void pressButton(int num){
-        int i = 9;
-        num++;
+    public void pressButton(int num){
+        Networking.JoinGame(num,response -> {
+            MyGames.doRefresh = true;
+            finish();
+        });
     }
 
     @Override
@@ -28,6 +30,7 @@ public class FindGames extends AppCompatActivity {
 
         findViewById(R.id.btn_CreateGame).setOnClickListener(v -> {
             //Create Game menu here
+            MatchSetup.useOnline = true;
             startActivity(new Intent(this, MatchSetup.class));
         });
 
@@ -37,7 +40,7 @@ public class FindGames extends AppCompatActivity {
         LayoutInflater inflater = LayoutInflater.from(this);
 
         //Ask the server for our games.
-        Networking.GetMyGames(response -> {
+        Networking.FindGames(response -> {
             JSONArray games = null;
             try {
                 games = response.getJSONArray("games");
@@ -56,7 +59,7 @@ public class FindGames extends AppCompatActivity {
                         pressButton(id);
                     });
                     JSONObject rules = game.getJSONObject("rules");
-                    ((TextView)layout.getChildAt(3)).setText(rules.getBoolean("useBombs") ? "Bombs, " + rules.getInt("bombCD") + " cd" : "No Bombs");
+                    ((TextView)layout.getChildAt(3)).setText(rules.getBoolean("useBombs") ? "Bombs, " + (rules.getInt("bombCD")-1) + " cd" : "No Bombs");
                     ((TextView)layout.getChildAt(4)).setText(rules.getBoolean("useWood") ? "Wood" : "No Wood");
                     scrolly.addView(layout, 0);
                 }

@@ -10,7 +10,7 @@ import android.widget.Button;
 
 public class MainMenu extends AppCompatActivity {
 
-    private static Button btn_Resume;
+    private Button btn_Resume;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,6 +21,7 @@ public class MainMenu extends AppCompatActivity {
         //The local play setup
         findViewById(R.id.btn_Setup_Local).setOnClickListener(v -> {
             MatchSetup.useOnline = false;
+            Connect4View.useOnline = false;
             startActivity(new Intent(this, MatchSetup.class));
         });
         //The resume local game button
@@ -31,17 +32,21 @@ public class MainMenu extends AppCompatActivity {
 
         //The online play buttons
         findViewById(R.id.btn_start_con4_online).setOnClickListener(v -> {
-            if (!Connect4View.useOnline) {
-                Connect4View.useOnline = true;
+            if (!Connect4View.useOnline || Networking.slowGame) {
                 Connect4View.setup = false;
+                Connect4View.netID = 0;
+                Connect4View.useOnline = true;
             }
+            Networking.slowGame = false;
             startConn4(v);
         });
         findViewById(R.id.btn_start_strat4_online).setOnClickListener(v -> {
-            if (!Connect4View.useOnline) {
-                Connect4View.useOnline = true;
+            if (!Connect4View.useOnline || Networking.slowGame) {
                 Connect4View.setup = false;
+                Connect4View.netID = 0;
+                Connect4View.useOnline = true;
             }
+            Networking.slowGame = false;
             startStrat4();
         });
 
@@ -50,7 +55,7 @@ public class MainMenu extends AppCompatActivity {
             startActivity(new Intent(this, HelpMenu.class));
         });
 
-        //Help button
+        //MyGames button
         findViewById(R.id.btn_MyGames).setOnClickListener(v -> {
             startActivity(new Intent(this, MyGames.class));
         });
@@ -73,7 +78,8 @@ public class MainMenu extends AppCompatActivity {
             waitingForGame = false;
             strat4_running = false;
             Connect4View.setup = false;
-            if (netGameID >= 0)
+            Connect4View.netID = netGameID;
+            if (netGameID > 0)
                 Connect4View.useOnline = true;
             else
                 Connect4View.useOnline = false;
@@ -84,14 +90,12 @@ public class MainMenu extends AppCompatActivity {
             Strategic4View.useWood = useWood;
             startStrat4();
         }
-        if (strat4_running && !Strategic4View.useOnline)
-        {
+
+        //Enable the Resume button
+        if (strat4_running && !Strategic4View.useOnline && !Connect4View.gameOver)
             btn_Resume.setEnabled(true);
-        }
         else
-        {
             btn_Resume.setEnabled(false);
-        }
     }
 
     @Override

@@ -21,16 +21,16 @@ public class Networking {
     public static final String PREFS_NAME = "Strategic4Prefs";
     private static final String baseURL = "https://starcatcher.us/connect4/";
     public static final String ReqTAG = "MooTag";
-    private static Context context;
+    private static SharedPreferences settings;
     private static String uuid;
+    public static boolean slowGame = false;
     static RequestQueue queue;
 
     public static void init(Context _context){
-        context = _context;
-        queue = Volley.newRequestQueue(context);
+        queue = Volley.newRequestQueue(_context);
 
         // Restore preferences
-        SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
+        settings = _context.getSharedPreferences(PREFS_NAME, 0);
         uuid = settings.getString("uuid", "");
         if (uuid.equals("")){
             uuid = UUID.randomUUID().toString();
@@ -43,7 +43,6 @@ public class Networking {
         stopRequests();
         // We need an Editor object to make preference changes.
         // All objects are from android.context.Context
-        SharedPreferences settings = context.getSharedPreferences(PREFS_NAME, 0);
         SharedPreferences.Editor editor = settings.edit();
         editor.putString("uuid", uuid);
 
@@ -58,28 +57,35 @@ public class Networking {
         queue.add(jsObjRequest);
     }
     public static void Connect(int gameType, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
-        String reqURL = baseURL + "test.lua?action=connect&game=" + gameType + "&uuid=" + uuid;
+        String reqURL;
+        if (slowGame)
+            reqURL = baseURL + "test.lua?action=joingame&uuid=" + uuid + "&ID=" + gameType;
+        else
+            reqURL = baseURL + "test.lua?action=connect&game=" + gameType + "&uuid=" + uuid;
 
         doRequest(reqURL,listener,errorListener);
     }
     public static void GetTurns(int gameID, Response.Listener<JSONObject> listener, Response.ErrorListener errorListener){
         String reqURL = baseURL + "test.lua?action=get&ID=" + gameID;
 
-        //TODO Check for slow games, add &slow=true
+        if (slowGame)
+            reqURL += "&slow=1";
 
         doRequest(reqURL,listener,errorListener);
     }
     public static void SendEvent(int gameID, int _event, int _data, int _type, int counter, Response.Listener<JSONObject> listener){
         String reqURL = baseURL + "test.lua?action=move&ID=" + gameID + "&Event=" + _event + "&Data=" + _data + "&Type=" + _type + "&count=" + counter;
 
-        //TODO Check for slow games, add &slow=true
+        if (slowGame)
+            reqURL += "&slow=1";
 
         doRequest(reqURL,listener,error -> {});
     }
     public static void GameOver(int gameID){
         String reqURL = baseURL + "test.lua?action=gameOver&ID=" + gameID + "&uuid=" + uuid;
 
-        //TODO Check for slow games, add &slow=true
+        if (slowGame)
+            reqURL += "&slow=1";
 
         doRequest(reqURL,response -> {},error -> {});
     }

@@ -1,6 +1,7 @@
 package us.starcatcher.strategic4;
 
 import android.content.Intent;
+import android.os.NetworkOnMainThreadException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.CheckBox;
@@ -21,8 +22,7 @@ public class MatchSetup extends AppCompatActivity {
 
         findViewById(R.id.btn_FinishMatchSetup).setOnClickListener(v -> {
             //Start a new game here, return to the main menu, which can load the waiting game.
-            MainMenu.waitingForGame = true;
-            //Set rules for the starting game
+
             MainMenu.bombCD = sk.getProgress() + 1;
             MainMenu.useBombs = ((CheckBox)findViewById(R.id.check_Bombs)).isChecked();
             MainMenu.useWood = ((CheckBox)findViewById(R.id.check_Wood)).isChecked();
@@ -30,10 +30,20 @@ public class MatchSetup extends AppCompatActivity {
             //TODO We need to tell the server that we created a new game with these rules.
             if (useOnline)
             {
+                Networking.CreateGame(MainMenu.useBombs,MainMenu.bombCD,MainMenu.useWood,response -> {
 
+                });
+                MyGames.doRefresh = true;
+                startActivity(new Intent(this, MyGames.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
+            }
+            else
+            {
+                //Set rules for the starting game
+                MainMenu.waitingForGame = true;
+                MainMenu.netGameID = 0;
+                startActivity(new Intent(this, MainMenu.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
             }
 
-            startActivity(new Intent(this, MainMenu.class).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP));
         });
 
 
